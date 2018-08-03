@@ -1,0 +1,107 @@
+{
+  "project_info": {
+    "project_number": "304381664434",
+    "firebase_url": "https://text-at.firebaseio.com",
+    "project_id": "text-at",
+    "storage_bucket": "text-at.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304381664434:android:bbc9f0155dcb75c3",
+        "android_client_info": {
+          "package_name": "com.andriy.textat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "304381664434-d6i8qmc6k2k3o37nm27sd8mpbf73annv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andriy.textat",
+            "certificate_hash": "e21f802c7db1fce8e9cdc75cf40845f3e3ed9c80"
+          }
+        },
+        {
+          "client_id": "304381664434-smjppdn4en7nrvgr9aqriac52bpb3igf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andriy.textat",
+            "certificate_hash": "d6cc6cab30fafcd5128cfa6ac4291d5642adb7ca"
+          }
+        },
+        {
+          "client_id": "304381664434-c64remoeq3tqqvorbdc4gbhd5bucnmc8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADDZ32lheVh51sf4sJBlYRvrirwatPEzM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "304381664434-c64remoeq3tqqvorbdc4gbhd5bucnmc8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304381664434:android:9e3450599e3ae930",
+        "android_client_info": {
+          "package_name": "com.andriyleutskyy.textat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "304381664434-mcop1224t9k7hg134p136e3stdc8hl0h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andriyleutskyy.textat",
+            "certificate_hash": "e21f802c7db1fce8e9cdc75cf40845f3e3ed9c80"
+          }
+        },
+        {
+          "client_id": "304381664434-c64remoeq3tqqvorbdc4gbhd5bucnmc8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADDZ32lheVh51sf4sJBlYRvrirwatPEzM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "304381664434-c64remoeq3tqqvorbdc4gbhd5bucnmc8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
