@@ -12,8 +12,6 @@ import com.google.firebase.auth.FirebaseUser;
 import java.util.Arrays;
 import java.util.List;
 
-
-
 public class LoginActivity extends AppCompatActivity {
 
     final int RC_SIGN_IN = 123;
@@ -24,22 +22,20 @@ public class LoginActivity extends AppCompatActivity {
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
+            switchToHome();
         } else {
             List<AuthUI.IdpConfig> providers = Arrays.asList(
                     new AuthUI.IdpConfig.EmailBuilder().build(),
                     new AuthUI.IdpConfig.FacebookBuilder().build(),
                     new AuthUI.IdpConfig.GoogleBuilder().build());
 
-            // Create and launch sign-in intent
+            // Lanzar intent con los diferentes proveedores de autentificación
             startActivityForResult(
                     AuthUI.getInstance()
                             .createSignInIntentBuilder()
                             .setTheme((R.style.AppThemeFirebaseAuth))
                             .setAvailableProviders(providers)
-                            .setLogo(R.drawable.logo)
+                            .setLogo(R.drawable.logo2)
                             .build(),
                     RC_SIGN_IN);
         }
@@ -53,16 +49,16 @@ public class LoginActivity extends AppCompatActivity {
             IdpResponse response = IdpResponse.fromResultIntent(data);
 
             if (resultCode == RESULT_OK) {
-                // Successfully signed in
+
+                // Usuario logueado, cambiar a "Home"
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 switchToHome();
+
             } else {
-                // Sign in failed. If response is null the user canceled the
-                // sign-in flow using the back button. Otherwise check
-                // response.getError().getErrorCode() and handle the error.
-                // ...
+                // # Todo: Handlear excepciones
             }
         }
+
     }
 
     protected void switchToHome() {
