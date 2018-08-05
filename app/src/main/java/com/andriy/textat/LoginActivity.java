@@ -21,7 +21,8 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null) {
+
+        if (auth.getCurrentUser() != null) { // Si el usuario está logueado ya
             switchToHome();
         } else {
             List<AuthUI.IdpConfig> providers = Arrays.asList(
@@ -33,9 +34,9 @@ public class LoginActivity extends AppCompatActivity {
             startActivityForResult(
                     AuthUI.getInstance()
                             .createSignInIntentBuilder()
-                            .setTheme((R.style.AppThemeFirebaseAuth))
+                            .setTheme((R.style.LoginTheme))
+                            .setLogo(R.drawable.textat)
                             .setAvailableProviders(providers)
-                            .setLogo(R.drawable.logo2)
                             .build(),
                     RC_SIGN_IN);
         }
@@ -55,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
                 switchToHome();
 
             } else {
-                // # Todo: Handlear excepciones
+                // #Todo: mostrar mensaje de error
             }
         }
 
