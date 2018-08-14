@@ -98,6 +98,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         map.setMyLocationEnabled(true);
+        map.setOnMarkerClickListener(this);
         addMarksToMap();
     }
 

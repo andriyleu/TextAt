@@ -30,6 +30,7 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme" />
+        <activity android:name=".MarkActivity"></activity>
     </application>
 
 </manifest>
