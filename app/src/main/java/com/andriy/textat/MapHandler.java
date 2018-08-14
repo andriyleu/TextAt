@@ -20,6 +20,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -27,6 +28,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.Map;
@@ -96,7 +98,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         map.setMyLocationEnabled(true);
-
+        addMarksToMap();
     }
 
 
@@ -147,7 +149,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                 });
     }
 
-    private void getMarks() {
+    private void addMarksToMap() {
         db.collection("anotaciones")
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -155,7 +157,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (DocumentSnapshot document : task.getResult()) {
-                                Log.d(TAG, document.getId() + " => " + document.getData());
+                                GeoPoint point = (GeoPoint) document.get("ubicacion");
+                                LatLng loc = new LatLng(point.getLatitude(), point.getLongitude());
+                                map.addMarker(new MarkerOptions().position(loc)
+                                        .title("test"));
                             }
                         } else {
                             Log.w(TAG, "Error getting documents.", task.getException());
@@ -163,6 +168,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                     }
                 });
     }
+
 
     // interacción con la clase
     public interface OnFragmentInteractionListener {
