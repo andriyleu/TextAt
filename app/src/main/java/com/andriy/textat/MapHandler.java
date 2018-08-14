@@ -2,6 +2,7 @@ package com.andriy.textat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -20,6 +21,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -72,6 +74,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
         View v = inflater.inflate(R.layout.fragment_map_handler, container, false);
         SupportMapFragment mapFragment = (SupportMapFragment) this.getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
         return v;
     }
 
@@ -98,7 +101,23 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         map.setMyLocationEnabled(true);
-        map.setOnMarkerClickListener(this);
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+
+                DocumentReference docRef = db.collection("anotaciones").document(marker.getTitle());
+                docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        Intent intent = new Intent(getActivity(), MarkActivity.class);
+                        intent.putExtra("mark", documentSnapshot.toObject(Mark.class));
+                        startActivity(intent);
+                    }
+
+                });
+                return true;
+            }
+        });
         addMarksToMap();
     }
 
@@ -158,10 +177,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (DocumentSnapshot document : task.getResult()) {
-                                GeoPoint point = (GeoPoint) document.get("ubicacion");
+                                GeoPoint point = (GeoPoint) document.get("location");
                                 LatLng loc = new LatLng(point.getLatitude(), point.getLongitude());
                                 map.addMarker(new MarkerOptions().position(loc)
-                                        .title("test"));
+                                        .title(document.getId()));
                             }
                         } else {
                             Log.w(TAG, "Error getting documents.", task.getException());
