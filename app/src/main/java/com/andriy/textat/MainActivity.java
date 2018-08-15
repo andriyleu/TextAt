@@ -1,6 +1,8 @@
 package com.andriy.textat;
 
 import android.Manifest;
+import android.support.design.widget.CoordinatorLayout;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -126,6 +128,10 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_manage) {
 
         } else if (id == R.id.nav_share) {
+
+            Intent intent = new Intent(this, MarkDetailActivity.class);
+            startActivity(intent);
+
 
         } else if (id == R.id.nav_send) {
 

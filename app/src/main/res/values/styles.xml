@@ -1,11 +1,17 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="coordinatorLayoutStyle">@style/Widget.Support.CoordinatorLayout</item>
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+
     </style>
 
     <style name="AppThemeFirebaseAuth" parent="android:Theme.Material.Light.NoActionBar">
@@ -15,13 +21,14 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="FirebaseAuthActionBarStyle" parent="Widget.AppCompat.ActionBar">
+    <style name="FirebaseAuthActionBarStyle" parent="Base.Widget.AppCompat.ActionBar">
         <item name="android:background">@color/colorPrimaryDark</item>
     </style>
 
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppTheme.AppBarOverlay" parent="Base.ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="AppTheme.PopupOverlay" parent="Base.ThemeOverlay.AppCompat.Light" />
+
 
 
     <style name="LoginTheme" parent="FirebaseUI">
@@ -49,5 +56,9 @@
     </style>
 
     <style name="FirebaseUI.Text.Link"></style>
+
+    <style name="toolbar_title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">24sp</item>
+    </style>
 
 </resources>

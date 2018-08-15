@@ -8,7 +8,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.util.Date;
-import java.util.HashMap;
 
 public class Mark implements Parcelable {
     private GeoPoint location;
@@ -53,20 +52,6 @@ public class Mark implements Parcelable {
             return new Mark[size];
         }
     };
-
-    protected HashMap<String, Object> toHashMap() {
-
-        // #TODO complete hashing
-
-        HashMap<String, Object> hashed = new HashMap<>();
-
-        hashed.put("location", location);
-        hashed.put("description", description);
-        hashed.put("url", url);
-        hashed.put("rating", rating);
-
-        return hashed;
-    }
 
     @Override
     public int describeContents() {
@@ -113,6 +98,5 @@ public class Mark implements Parcelable {
     public Timestamp getTimestamp() {
         return timestamp;
     }
-
 
 }

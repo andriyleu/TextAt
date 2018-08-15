@@ -37,7 +37,6 @@ import java.util.Map;
 
 public class MapHandler extends Fragment implements OnMapReadyCallback, LocationListener {
 
-    private SupportMapFragment fragment;
     private GoogleMap map;
     private LocationManager locationManager;
 
@@ -47,7 +46,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
 
     private static final long MIN_TIME = 400;
     private static final float MIN_DISTANCE = 100;
-
 
     private OnFragmentInteractionListener mListener;
 
@@ -109,7 +107,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                 docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        Intent intent = new Intent(getActivity(), MarkActivity.class);
+                        Intent intent = new Intent(getActivity(), MarkDetailActivity.class);
                         intent.putExtra("mark", documentSnapshot.toObject(Mark.class));
                         startActivity(intent);
                     }
@@ -131,26 +129,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     }
 
     private void showMarks() {}
-
-    @Override
-    public void onLocationChanged(Location location) {
-        updateCamera(location);
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String s) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String s) {
-
-    }
 
     private void addMark(Map<String, Object> mark) {
         db.collection("anotaciones")
@@ -189,8 +167,28 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                 });
     }
 
+    // Related to LocationManager
+    @Override
+    public void onLocationChanged(Location location) {
+        updateCamera(location);
+    }
 
-    // interacción con la clase
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
+    // Fragment interaction with Activity
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);

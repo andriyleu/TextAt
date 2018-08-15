@@ -33,6 +33,14 @@
         <activity
             android:name=".MarkActivity"
             android:label="@string/title_activity_mark"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".AddMark"
+            android:label="@string/title_activity_add_mark"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".MarkDetailActivity"
+            android:label="@string/title_activity_mark_detail"
             android:theme="@style/AppTheme"></activity>
     </application>
 
