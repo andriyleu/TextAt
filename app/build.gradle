@@ -16,6 +16,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            def requested = details.requested
+            if (requested.group == "com.android.support") {
+                if (!requested.name.startsWith("multidex")) {
+                    details.useVersion "27.+"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -34,6 +44,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     implementation 'com.google.android.gms:play-services-location:15.0.1'
     implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.1.1'
+    implementation 'com.google.maps.android:android-maps-utils:0.5'
 }
 
 apply plugin: 'com.google.gms.google-services'

@@ -2,7 +2,6 @@ package com.andriy.textat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,7 +20,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -32,8 +31,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
-
-import java.util.Map;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
+import com.google.maps.android.clustering.view.ClusterRenderer;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
 public class MapHandler extends Fragment implements OnMapReadyCallback, LocationListener {
 
@@ -43,6 +46,9 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public static final String TAG = "debug";
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private ClusterManager<Mark> mClusterManager;
+
 
     private static final long MIN_TIME = 400;
     private static final float MIN_DISTANCE = 100;
@@ -99,7 +105,35 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         map.setMyLocationEnabled(true);
-        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+
+        mClusterManager = new ClusterManager<>(getActivity(), map);
+        googleMap.setOnCameraIdleListener(mClusterManager);
+        googleMap.setOnMarkerClickListener(mClusterManager);
+        googleMap.setOnInfoWindowClickListener(mClusterManager);
+
+        CustomClusterRenderer renderer = new CustomClusterRenderer(getActivity(), map, mClusterManager, map.getCameraPosition().zoom, map.getMaxZoomLevel());
+        map.setOnCameraMoveListener(renderer);
+
+        mClusterManager.setRenderer(renderer);
+
+
+
+        mClusterManager
+                .setOnClusterClickListener(new ClusterManager.OnClusterClickListener<Mark>() {
+                    @Override
+                    public boolean onClusterClick(final Cluster<Mark> cluster) {
+                        LatLngBounds.Builder builder = LatLngBounds.builder();
+                        for (ClusterItem item : cluster.getItems()) {
+                            builder.include(item.getPosition());
+                        }
+                        final LatLngBounds bounds = builder.build();
+                        map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+                        return true;
+                    }
+                });
+
+
+        /* map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
 
@@ -115,8 +149,12 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                 });
                 return true;
             }
-        });
+        }); */
+
+
         addMarksToMap();
+
+
     }
 
 
@@ -128,11 +166,12 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
         }
     }
 
-    private void showMarks() {}
+    private void showMarks() {
+    }
 
-    private void addMark(Map<String, Object> mark) {
+    private void addMark(Mark m) {
         db.collection("anotaciones")
-                .add(mark)
+                .add(m)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
@@ -155,11 +194,15 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (DocumentSnapshot document : task.getResult()) {
-                                GeoPoint point = (GeoPoint) document.get("location");
+                                /*GeoPoint point = (GeoPoint) document.get("location");
                                 LatLng loc = new LatLng(point.getLatitude(), point.getLongitude());
                                 map.addMarker(new MarkerOptions().position(loc)
-                                        .title(document.getId()));
+                                        .title(document.getId()));*/
+
+                                mClusterManager.addItem(document.toObject(Mark.class));
                             }
+                            mClusterManager.cluster();
+
                         } else {
                             Log.w(TAG, "Error getting documents.", task.getException());
                         }
@@ -192,5 +235,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    @SuppressLint("MissingPermission")
+    protected Location getCurrentLocation() {
+        return locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
     }
 }

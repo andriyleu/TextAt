@@ -4,23 +4,26 @@ import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.maps.android.clustering.ClusterItem;
 
 import java.util.Date;
 
-public class Mark implements Parcelable {
+public class Mark implements Parcelable, ClusterItem {
     private GeoPoint location;
+    private String title;
     private String description;
     private String url;
     private String user;
     private Timestamp timestamp;
     private int rating;
 
+    // empty constructor needed to retrieve from Firebase (POJO)
     public Mark() {
 
     }
-
 
     public Mark(GeoPoint l, String d, String u, String c, Timestamp t, int r) {
         location = l;
@@ -29,16 +32,18 @@ public class Mark implements Parcelable {
         user = c;
         rating = r;
         timestamp = t;
+        title = "(" + location.getLatitude() +", " + location.getLongitude() +")";
     }
 
     public Mark(Parcel in) {
         Location l = in.readParcelable(Location.class.getClassLoader());
-        location = new GeoPoint(l.getLatitude(), l.getLongitude()); // this works?
+        location = new GeoPoint(l.getLatitude(), l.getLongitude());
         description = in.readString();
         url = in.readString();
         user = in.readString();
         rating = in.readInt();
         timestamp = new Timestamp(new Date(in.readLong()));
+        title = "(" + location.getLatitude() +", " + location.getLongitude() +")";
     }
 
     public static final Creator<Mark> CREATOR = new Creator<Mark>() {
@@ -71,7 +76,7 @@ public class Mark implements Parcelable {
         parcel.writeString(user);
         parcel.writeLong(timestamp.toDate().getTime());
         parcel.writeInt(rating);
-
+        parcel.writeString(title);
     }
 
 
@@ -99,4 +104,18 @@ public class Mark implements Parcelable {
         return timestamp;
     }
 
+    @Override
+    public LatLng getPosition() {
+        return new LatLng(location.getLatitude(), location.getLongitude());
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public String getSnippet() {
+        return description;
+    }
 }
