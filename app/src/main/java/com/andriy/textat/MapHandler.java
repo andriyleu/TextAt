@@ -66,9 +66,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
-
     }
 
     @Override
@@ -103,6 +100,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
+        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
+
         map = googleMap;
         map.setMyLocationEnabled(true);
 
@@ -131,25 +132,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                         return true;
                     }
                 });
-
-
-        /* map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-
-                DocumentReference docRef = db.collection("anotaciones").document(marker.getTitle());
-                docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        Intent intent = new Intent(getActivity(), MarkDetailActivity.class);
-                        intent.putExtra("mark", documentSnapshot.toObject(Mark.class));
-                        startActivity(intent);
-                    }
-
-                });
-                return true;
-            }
-        }); */
 
 
         addMarksToMap();

@@ -107,7 +107,34 @@
         "when a user tries to pick up one of cards.\n\n"
     </string>
 
+
+    // AddMark Activity
+    <string name="addMarkTitle">Añadir una anotación</string>
     <string name="publishButton">Publicar</string>
+    <string name="mainText">¿Qué hay aquí?</string>
+    <string name="markURI">URI</string>
+    <string name="shownWhen">Visible a</string>
+    <string name="negative">-1</string>
+    <string name="neutral">0</string>
+    <string name="positive">+1</string>
+    <string name="close">1000m</string>
+    <string name="closer">500m</string>
+    <string name="closest">50m</string>
+
+
+    <string-array name="privacidad">
+        <item>Público</item>
+        <item>Privado</item>
+        <item>A distancia</item>
+    </string-array>
+
+    <string-array name="visibilidad">
+        <item>50m</item>
+        <item>500m</item>
+        <item>1000m</item>
+    </string-array>
+
+
 
 
 </resources>

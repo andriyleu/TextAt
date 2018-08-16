@@ -26,10 +26,10 @@
 
             <TextView
                 android:id="@+id/createdBy"
-                android:layout_width="wrap_content"
+                android:layout_width="236dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="100dp"
-                android:layout_marginLeft="32dp"/>
+                android:layout_marginLeft="32dp"
+                android:layout_marginTop="100dp" />
 
             <TextView
                 android:id="@+id/rating"
@@ -47,6 +47,11 @@
                 app:layout_collapseMode="pin"
                 app:popupTheme="@style/AppTheme.PopupOverlay" />
 
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView" />
 
 
         </android.support.design.widget.CollapsingToolbarLayout>

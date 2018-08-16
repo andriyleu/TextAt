@@ -13,12 +13,12 @@ public class CustomClusterRenderer extends DefaultClusterRenderer<Mark> implemen
     private float currentZoomLevel, maxZoomLevel;
 
 
-    public CustomClusterRenderer(Context context, GoogleMap map, ClusterManager<Mark> clusterManager, float currentZoomLevel, float maxZoomLevel) {
+    public CustomClusterRenderer(Context context, GoogleMap map, ClusterManager<Mark> clusterManager, float currentZoom, float maxZoom) {
         super(context, map, clusterManager);
         setMinClusterSize(3);
         mMap = map;
-        this.currentZoomLevel = currentZoomLevel;
-        this.maxZoomLevel = maxZoomLevel;
+        currentZoomLevel = currentZoom;
+        maxZoomLevel = maxZoom;
 
     }
 
@@ -30,7 +30,7 @@ public class CustomClusterRenderer extends DefaultClusterRenderer<Mark> implemen
     @Override
     protected boolean shouldRenderAsCluster(Cluster cluster) {
 
-        return currentZoomLevel + 2< maxZoomLevel && cluster.getSize() > 3;
+        return currentZoomLevel + 2 < maxZoomLevel && cluster.getSize() > 3;
 
     }
 }
