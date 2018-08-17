@@ -62,7 +62,7 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    protected void switchToHome() {
+    private void switchToHome() {
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         startActivity(intent);
         finish();

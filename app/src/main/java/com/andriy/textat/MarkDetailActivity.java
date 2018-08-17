@@ -1,11 +1,13 @@
 package com.andriy.textat;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -24,6 +26,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.luseen.autolinklibrary.AutoLinkMode;
+import com.luseen.autolinklibrary.AutoLinkOnClickListener;
+import com.luseen.autolinklibrary.AutoLinkTextView;
 
 
 public class MarkDetailActivity extends AppCompatActivity {
@@ -31,7 +36,7 @@ public class MarkDetailActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
     private TextView createdBy;
-    private TextView description;
+    private AutoLinkTextView description;
     private TextView rating;
     private TextView timestamp;
     private ImageView image1;
@@ -88,10 +93,25 @@ public class MarkDetailActivity extends AppCompatActivity {
             }
         });
 
+        // desc
 
+        description.addAutoLinkMode(
+                AutoLinkMode.MODE_HASHTAG, AutoLinkMode.MODE_MENTION);
+
+        description.setMentionModeColor(ContextCompat.getColor(this, R.color.colorAccent));
+        description.setHashtagModeColor(ContextCompat.getColor(this, R.color.colorAccent));
+
+
+        description.setAutoLinkOnClickListener(new AutoLinkOnClickListener() {
+            @Override
+            public void onAutoLinkTextClick(AutoLinkMode autoLinkMode, String matchedText) {
+                if (autoLinkMode == AutoLinkMode.MODE_MENTION) {
+
+                }
+            }
+        });
 
         // image setup
-
         image1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -108,7 +128,7 @@ public class MarkDetailActivity extends AppCompatActivity {
 
         createdBy.setText("Anotación creada por " + mark.getUser());
         getSupportActionBar().setTitle(mark.getTitle());
-        description.setText(mark.getDescription());
+        description.setAutoLinkText(mark.getDescription());
 
         setImages();
 

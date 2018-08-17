@@ -175,6 +175,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
 
                                     mClusterManager.addItem(m);
                                     break;
+
                                 case MODIFIED:
                                     break;
 
