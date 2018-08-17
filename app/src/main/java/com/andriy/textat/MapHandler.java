@@ -8,7 +8,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -23,12 +22,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -56,10 +50,9 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
 
     private OnFragmentInteractionListener mListener;
 
+
     public MapHandler() {
         // Required empty public constructor
-
-
     }
 
     @SuppressLint("MissingPermission")
@@ -127,6 +120,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                         for (ClusterItem item : cluster.getItems()) {
                             builder.include(item.getPosition());
                         }
+
                         final LatLngBounds bounds = builder.build();
                         map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
                         return true;
@@ -175,10 +169,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                         for (DocumentChange document : snapshots.getDocumentChanges()) {
                             DocumentSnapshot d = document.getDocument();
                             Mark m = document.getDocument().toObject(Mark.class);
-
+                            m.setId(d.getId());
                             switch (document.getType()) {
                                 case ADDED:
-                                    m.setId(d.getId());
+
                                     mClusterManager.addItem(m);
                                     break;
                                 case MODIFIED:

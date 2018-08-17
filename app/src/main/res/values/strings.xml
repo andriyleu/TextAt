@@ -120,6 +120,7 @@
     <string name="close">1000m</string>
     <string name="closer">500m</string>
     <string name="closest">50m</string>
+    <string name="delete">Borrar esta anotación</string>
 
 
     <string-array name="privacidad">

@@ -147,4 +147,15 @@ public class Mark implements Parcelable, ClusterItem {
     public void setId(String id) {
         this.id = id;
     }
+
+    @Override
+    public boolean equals(Object other){
+        if (!(other instanceof Mark)) return false;
+        return id.equals(((Mark) other).id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
 }
