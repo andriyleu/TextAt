@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -187,6 +188,10 @@ public class AddMarkActivity extends AppCompatActivity {
                 if (TextUtils.isEmpty(description.getText().toString())) {
                     description.setError("¡Tienes que escribir una descripción!");
                     return;
+                }
+
+                if ( Patterns.WEB_URL.matcher(uri.getText().toString()).matches() ) {
+                    uri.setError("¡Tienes que poner una url válida!");
                 }
 
                 Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), uri.getText().toString(), FirebaseAuth.getInstance().getCurrentUser().getEmail(), Timestamp.now(), rating, selectedPrivacy, selectedVisibility);

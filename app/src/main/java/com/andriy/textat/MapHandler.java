@@ -2,12 +2,14 @@ package com.andriy.textat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,22 +23,21 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
-import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
-import com.google.maps.android.clustering.view.ClusterRenderer;
-import com.google.maps.android.clustering.view.DefaultClusterRenderer;
+import com.google.maps.android.clustering.ClusterManager.OnClusterItemInfoWindowClickListener;
 
 public class MapHandler extends Fragment implements OnMapReadyCallback, LocationListener {
 
@@ -118,7 +119,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
         mClusterManager.setRenderer(renderer);
 
 
-
         mClusterManager
                 .setOnClusterClickListener(new ClusterManager.OnClusterClickListener<Mark>() {
                     @Override
@@ -132,6 +132,18 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
                         return true;
                     }
                 });
+
+        mClusterManager.setOnClusterItemInfoWindowClickListener(new OnClusterItemInfoWindowClickListener<Mark>() {
+            @Override
+            public void onClusterItemInfoWindowClick(Mark mark) {
+                Intent intent = new Intent(getActivity(), MarkDetailActivity.class);
+                intent.putExtra("mark", mark);
+                intent.putExtra("id", mark.getId());
+                startActivity(intent);
+            }
+
+
+        });
 
 
         addMarksToMap();
@@ -148,46 +160,35 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, Location
         }
     }
 
-    private void showMarks() {
-    }
-
-    private void addMark(Mark m) {
-        db.collection("anotaciones")
-                .add(m)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error adding document", e);
-                    }
-                });
-    }
-
     private void addMarksToMap() {
+
         db.collection("anotaciones")
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (DocumentSnapshot document : task.getResult()) {
-                                /*GeoPoint point = (GeoPoint) document.get("location");
-                                LatLng loc = new LatLng(point.getLatitude(), point.getLongitude());
-                                map.addMarker(new MarkerOptions().position(loc)
-                                        .title(document.getId()));*/
-
-                                mClusterManager.addItem(document.toObject(Mark.class));
-                            }
-                            mClusterManager.cluster();
-
-                        } else {
-                            Log.w(TAG, "Error getting documents.", task.getException());
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w("TAG", "listen:error", e);
+                            return;
                         }
+
+                        for (DocumentChange document : snapshots.getDocumentChanges()) {
+                            DocumentSnapshot d = document.getDocument();
+                            Mark m = document.getDocument().toObject(Mark.class);
+
+                            switch (document.getType()) {
+                                case ADDED:
+                                    m.setId(d.getId());
+                                    mClusterManager.addItem(m);
+                                    break;
+                                case MODIFIED:
+                                    break;
+
+                                case REMOVED:
+                                    mClusterManager.removeItem(m);
+                            }
+                        }
+                        mClusterManager.cluster();
                     }
                 });
     }

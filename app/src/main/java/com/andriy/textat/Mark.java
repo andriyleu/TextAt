@@ -10,8 +10,6 @@ import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.maps.android.clustering.ClusterItem;
 
-import java.util.Date;
-
 public class Mark implements Parcelable, ClusterItem {
     private GeoPoint location;
     private String title;
@@ -19,16 +17,17 @@ public class Mark implements Parcelable, ClusterItem {
     private String uri;
     private String user;
     private Timestamp timestamp;
-    private int privacy;
-    private int rating;
-    private int visibility;
+    private long privacy;
+    private long rating;
+    private long visibility;
+    private String id;
 
     // empty constructor needed to retrieve from Firebase (POJO)
     public Mark() {
 
     }
 
-    public Mark(GeoPoint l, String d, String u, String c, Timestamp t, int r, int p, int v) {
+    public Mark(GeoPoint l, String d, String u, String c, Timestamp t, long r, long p, long v) {
         location = l;
         description = d;
         uri = u;
@@ -46,9 +45,10 @@ public class Mark implements Parcelable, ClusterItem {
         description = in.readString();
         uri = in.readString();
         user = in.readString();
-        rating = in.readInt();
-        privacy = in.readInt();
-        timestamp = new Timestamp(new Date(in.readLong()));
+        rating = in.readLong();
+        privacy = in.readLong();
+        visibility = in.readLong();
+        timestamp = in.readParcelable(Timestamp.class.getClassLoader());
         title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
     }
 
@@ -80,10 +80,10 @@ public class Mark implements Parcelable, ClusterItem {
         parcel.writeString(description);
         parcel.writeString(uri);
         parcel.writeString(user);
-        parcel.writeLong(timestamp.toDate().getTime());
-        parcel.writeInt(rating);
-        parcel.writeInt(privacy);
-        parcel.writeInt(visibility);
+        parcel.writeLong(rating);
+        parcel.writeLong(privacy);
+        parcel.writeLong(visibility);
+        parcel.writeParcelable(timestamp, i);
         parcel.writeString(title);
     }
 
@@ -100,7 +100,7 @@ public class Mark implements Parcelable, ClusterItem {
         return uri;
     }
 
-    public int getRating() {
+    public long getRating() {
         return rating;
     }
 
@@ -112,8 +112,12 @@ public class Mark implements Parcelable, ClusterItem {
         return timestamp;
     }
 
-    public int getPrivacy() {
+    public long getPrivacy() {
         return privacy;
+    }
+
+    public long getVisibility() {
+        return visibility;
     }
 
     @Exclude
@@ -125,7 +129,7 @@ public class Mark implements Parcelable, ClusterItem {
     @Exclude
     @Override
     public String getTitle() {
-        return title;
+        return title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
     }
 
     @Exclude
@@ -134,11 +138,13 @@ public class Mark implements Parcelable, ClusterItem {
         return description;
     }
 
-    public int getVisibility() {
-        return visibility;
+    @Exclude
+    public String getId() {
+        return id;
     }
 
-    public void setVisibility(int visibility) {
-        this.visibility = visibility;
+    @Exclude
+    public void setId(String id) {
+        this.id = id;
     }
 }
