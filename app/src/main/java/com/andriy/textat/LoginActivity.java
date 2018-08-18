@@ -1,8 +1,8 @@
 package com.andriy.textat;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -23,24 +23,27 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseAuth auth = FirebaseAuth.getInstance();
 
         if (auth.getCurrentUser() != null) { // Si el usuario está logueado ya
-            switchToHome();
-        } else {
-            List<AuthUI.IdpConfig> providers = Arrays.asList(
-                    new AuthUI.IdpConfig.EmailBuilder().build(),
-                    new AuthUI.IdpConfig.FacebookBuilder().build(),
-                    new AuthUI.IdpConfig.GoogleBuilder().build());
-
-            // Lanzar intent con los diferentes proveedores de autentificación
-            startActivityForResult(
-                    AuthUI.getInstance()
-                            .createSignInIntentBuilder()
-                            .setTheme((R.style.LoginTheme))
-                            .setLogo(R.drawable.textat)
-                            .setAvailableProviders(providers)
-                            .build(),
-                    RC_SIGN_IN);
+            switchToHome(auth.getCurrentUser());
+            return;
         }
+
+        List<AuthUI.IdpConfig> providers = Arrays.asList(
+                new AuthUI.IdpConfig.EmailBuilder().build(),
+                new AuthUI.IdpConfig.FacebookBuilder().build(),
+                new AuthUI.IdpConfig.GoogleBuilder().build());
+
+        // Lanzar intent con los diferentes proveedores de autentificación
+        startActivityForResult(
+                AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setTheme((R.style.LoginTheme))
+                        .setLogo(R.drawable.textat)
+                        .setAvailableProviders(providers)
+                        .build(),
+                RC_SIGN_IN);
     }
+
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -53,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 // Usuario logueado, cambiar a "Home"
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                switchToHome();
+                switchToHome(user);
 
             } else {
                 // #Todo: mostrar mensaje de error
@@ -62,8 +65,9 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void switchToHome() {
+    private void switchToHome(FirebaseUser user) {
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra("user", user);
         startActivity(intent);
         finish();
     }

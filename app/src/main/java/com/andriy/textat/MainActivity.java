@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapHandler.OnFragmentInteractionListener {
@@ -30,11 +31,16 @@ public class MainActivity extends AppCompatActivity
 
     private final int REQUEST_FINE_LOCATION = 1;
     private MapHandler mapHandler;
+    private FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Get user
+        Intent i = getIntent();
+        user =  i.getExtras().getParcelable("user");
 
         mapHandler = (MapHandler) this.getSupportFragmentManager().findFragmentById(R.id.map);
 
@@ -174,5 +180,9 @@ public class MainActivity extends AppCompatActivity
 
     public MapHandler getMapHandler() {
         return mapHandler;
+    }
+
+    public FirebaseUser getUser() {
+        return user;
     }
 }
