@@ -20,6 +20,7 @@ public class Mark implements Parcelable, ClusterItem {
     private long privacy;
     private long rating;
     private long visibility;
+    private boolean hasImages;
     private String id;
 
     // empty constructor needed to retrieve from Firebase (POJO)
@@ -27,7 +28,7 @@ public class Mark implements Parcelable, ClusterItem {
 
     }
 
-    public Mark(GeoPoint l, String d, String u, String c, Timestamp t, long r, long p, long v) {
+    public Mark(GeoPoint l, String d, String u, String c, Timestamp t, long r, long p, long v, boolean i) {
         location = l;
         description = d;
         uri = u;
@@ -37,6 +38,7 @@ public class Mark implements Parcelable, ClusterItem {
         title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
         privacy = p;
         visibility = v;
+        hasImages = i;
     }
 
     public Mark(Parcel in) {
@@ -49,6 +51,7 @@ public class Mark implements Parcelable, ClusterItem {
         privacy = in.readLong();
         visibility = in.readLong();
         timestamp = in.readParcelable(Timestamp.class.getClassLoader());
+        hasImages = (in.readInt() == 0) ? false : true;
         title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
     }
 
@@ -84,6 +87,7 @@ public class Mark implements Parcelable, ClusterItem {
         parcel.writeLong(privacy);
         parcel.writeLong(visibility);
         parcel.writeParcelable(timestamp, i);
+        parcel.writeInt(hasImages ? 1 : 0);
         parcel.writeString(title);
     }
 
@@ -120,6 +124,10 @@ public class Mark implements Parcelable, ClusterItem {
         return visibility;
     }
 
+    public boolean isHasImages() {
+        return hasImages;
+    }
+
     @Exclude
     @Override
     public LatLng getPosition() {
@@ -149,7 +157,7 @@ public class Mark implements Parcelable, ClusterItem {
     }
 
     @Override
-    public boolean equals(Object other){
+    public boolean equals(Object other) {
         if (!(other instanceof Mark)) return false;
         return id.equals(((Mark) other).id);
     }

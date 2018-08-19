@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity
     private MapHandler mapHandler;
     private FirebaseUser user;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

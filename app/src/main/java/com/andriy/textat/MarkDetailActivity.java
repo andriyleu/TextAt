@@ -1,8 +1,9 @@
 package com.andriy.textat;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -10,6 +11,8 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,6 +32,10 @@ import com.luseen.autolinklibrary.AutoLinkMode;
 import com.luseen.autolinklibrary.AutoLinkOnClickListener;
 import com.luseen.autolinklibrary.AutoLinkTextView;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class MarkDetailActivity extends AppCompatActivity {
 
@@ -39,10 +45,15 @@ public class MarkDetailActivity extends AppCompatActivity {
     private AutoLinkTextView description;
     private TextView rating;
     private TextView timestamp;
-    private ImageView image1;
-    private ImageView image2;
-    private ImageView image3;
+    private TextView uri;
+    private TextView markId;
+    private TextView visibility;
+    private List<ImageView> images;
+    private LinearLayout imageLayout;
+    private View separator;
     private Mark m;
+
+    private Uri imageLink;
 
     private FirebaseAuth mAuth;
 
@@ -50,7 +61,7 @@ public class MarkDetailActivity extends AppCompatActivity {
     FirebaseStorage storage;
     String imageURL;
 
-    private boolean zoomOut =  false;
+    private boolean zoomOut = false;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -59,15 +70,21 @@ public class MarkDetailActivity extends AppCompatActivity {
 
 
     private void bindElements() {
+        images = new ArrayList<>();
         toolbar = findViewById(R.id.toolbar);
         collapsingToolbar = findViewById(R.id.toolbar_layout);
         createdBy = findViewById(R.id.createdBy);
         description = findViewById(R.id.description);
         rating = findViewById(R.id.rating);
         timestamp = findViewById(R.id.timestamp);
-        image1 = findViewById(R.id.markImage1);
-        image2 = findViewById(R.id.markImage2);
-        image3 = findViewById(R.id.markImage3);
+        uri = findViewById(R.id.uri);
+        markId = findViewById(R.id.markId);
+        visibility = findViewById(R.id.visibility);
+        images.add((ImageView) findViewById(R.id.markImage1));
+        images.add((ImageView) findViewById(R.id.markImage2));
+        images.add((ImageView) findViewById(R.id.markImage3));
+        imageLayout = findViewById(R.id.imageViewer);
+        separator = findViewById(R.id.imagesSeparator);
     }
 
     @Override
@@ -111,20 +128,29 @@ public class MarkDetailActivity extends AppCompatActivity {
             }
         });
 
-        // image setup
-        image1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
-
         // Get info from extras
         Intent i = getIntent();
         Mark mark = (Mark) i.getExtras().getParcelable("mark");
         idDocument = i.getExtras().getString("id");
         m = mark;
+
+        // mark id
+        markId.setText("ID de la anotación: " + idDocument);
+        markId.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("id", idDocument);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(MarkDetailActivity.this, "Se ha copiado el ID de la anotación al portapapeles",
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+
+        // visibility
+        if (m.getPrivacy() == 2) {
+            visibility.setText("Esta anotación es visible sólo a " + m.getVisibility() + "m.");
+        }
+
 
         createdBy.setText("Anotación creada por " + mark.getUser());
         getSupportActionBar().setTitle(mark.getTitle());
@@ -133,9 +159,45 @@ public class MarkDetailActivity extends AppCompatActivity {
         setImages();
 
         // rating setUp
+        String markRating = Long.toString(mark.getRating());
+        if (mark.getRating() == 1) {
+            markRating = "+" + markRating;
+        }
+        rating.setText(markRating);
 
-        rating.setText(Long.toString(mark.getRating()));
-        timestamp.setText(mark.getTimestamp().toDate().toString());
+        //timestamp to spanish
+        Locale locale = new Locale("es", "ES");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm - dd/MM/yyyy");
+
+        timestamp.setText(sdf.format(mark.getTimestamp().toDate()));
+
+        // uri
+
+        if (!m.getUri().isEmpty()) {
+            uri.setVisibility(View.VISIBLE);
+            uri.setText(Html.fromHtml("<a href=" + m.getUri().toString() + "> URI"));
+            uri.setMovementMethod(LinkMovementMethod.getInstance());
+
+            uri.setOnClickListener(new View.OnClickListener() {
+                                       public void onClick(View v) {
+                                           Intent browserIntent = new Intent(Intent.ACTION_VIEW);
+                                           browserIntent.setData(Uri.parse(m.getUri().toString()));
+                                           startActivity(browserIntent);
+                                       }
+                                   }
+            );
+        }
+
+        // images setUp
+        if (m.isHasImages()) {
+            separator.setVisibility(View.VISIBLE);
+            imageLayout.setVisibility(View.VISIBLE);
+
+            // Get images from Storage
+            setImages();
+
+        }
     }
 
     @Override
@@ -176,44 +238,30 @@ public class MarkDetailActivity extends AppCompatActivity {
 
 
     private void setImages() {
+        int imageNumber = 1;
+        for (final ImageView image : images) {
+            final StorageReference ref = FirebaseStorage.getInstance().getReference().child("images/" + idDocument + "/" + Integer.toString(imageNumber++) + ".jpg");
 
+            ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                @Override
+                public void onSuccess(Uri uri) {
+                    imageLink = uri;
+                    imageURL = uri.toString();
+                    Glide.with(getApplicationContext()).load(imageURL).into(image);
+                    image.setVisibility(View.VISIBLE);
 
-        final StorageReference ref = FirebaseStorage.getInstance().getReference().child("images/" + idDocument + "/" + "1.jpg");
-
-        ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                imageURL = uri.toString();
-                Glide.with(getApplicationContext()).load(imageURL).into(image1);
-                image1.setVisibility(View.VISIBLE);
-            }
-        });
-
-
-
-        final StorageReference ref2 = FirebaseStorage.getInstance().getReference().child("images/" + idDocument + "/" + "2.jpg");
-
-        ref2.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                imageURL = uri.toString();
-                Glide.with(getApplicationContext()).load(imageURL).into(image2);
-                image2.setVisibility(View.VISIBLE);
-            }
-        });
-
-        final StorageReference ref3 = FirebaseStorage.getInstance().getReference().child("images/" + idDocument + "/" + "2.jpg");
-
-        ref3.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                imageURL = uri.toString();
-                Glide.with(getApplicationContext()).load(imageURL).into(image3);
-                image3.setVisibility(View.VISIBLE);
-
-            }
-        });
-
+                    image.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent();
+                            intent.setAction(Intent.ACTION_VIEW);
+                            intent.setDataAndType(imageLink, "image/*");
+                            startActivity(intent);
+                        }
+                    });
+                }
+            });
+        }
     }
 
 }

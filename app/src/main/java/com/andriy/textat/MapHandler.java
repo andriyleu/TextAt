@@ -175,7 +175,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
                                                     continue;
                                             }
                                         }
-
+                                        mClusterManager.addItem(m);
                                         break;
 
                                     case MODIFIED:

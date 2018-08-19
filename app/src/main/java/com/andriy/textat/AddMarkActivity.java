@@ -73,6 +73,7 @@ public class AddMarkActivity extends AppCompatActivity {
     private Uri image2;
     private Uri image3;
 
+    private boolean hasImages = false;
 
     private void bindElements() {
         toolbar = findViewById(R.id.toolbar);
@@ -185,16 +186,27 @@ public class AddMarkActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
+                String url = uri.getText().toString();
+
+                // Description is an obligatory field
                 if (TextUtils.isEmpty(description.getText().toString())) {
                     description.setError("¡Tienes que escribir una descripción!");
                     return;
                 }
 
-                if ( Patterns.WEB_URL.matcher(uri.getText().toString()).matches() ) {
-                    uri.setError("¡Tienes que poner una url válida!");
+                // URI field is optional, in case its filled check if it is a valid URL
+                if (!TextUtils.isEmpty(url)) {
+                    if (!Patterns.WEB_URL.matcher(url).matches()) {
+                        uri.setError("¡Tienes que poner una url válida!");
+                        return;
+                    } else {
+                        if (!url.contains("http://") && !url.contains("https://")) {
+                            url = "https://" + url;
+                        }
+                    }
                 }
 
-                Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), uri.getText().toString(), FirebaseAuth.getInstance().getCurrentUser().getEmail(), Timestamp.now(), rating, selectedPrivacy, selectedVisibility);
+                Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), url, FirebaseAuth.getInstance().getCurrentUser().getEmail(), Timestamp.now(), rating, selectedPrivacy, selectedVisibility, hasImages);
                 db.collection("anotaciones")
                         .add(m)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -206,11 +218,11 @@ public class AddMarkActivity extends AppCompatActivity {
                                 }
 
                                 if (image2 != null) {
-                                    uploadImage(image1, docRef, 2);
+                                    uploadImage(image2, docRef, 2);
                                 }
 
                                 if (image3 != null) {
-                                    uploadImage(image1, docRef, 3);
+                                    uploadImage(image3, docRef, 3);
                                 }
 
                                 finish();
@@ -288,7 +300,9 @@ public class AddMarkActivity extends AppCompatActivity {
         if (resultCode == -1 && data != null) {
             Uri uri = data.getData();
             try {
+
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                hasImages = true;
 
                 if (requestCode == PICK_IMAGE1) {
                     imageUpload1.setImageBitmap(bitmap);
