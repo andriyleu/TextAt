@@ -166,8 +166,6 @@ public class MarkDetailActivity extends AppCompatActivity {
         rating.setText(markRating);
 
         //timestamp to spanish
-        Locale locale = new Locale("es", "ES");
-
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm - dd/MM/yyyy");
 
         timestamp.setText(sdf.format(mark.getTimestamp().toDate()));

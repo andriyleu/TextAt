@@ -8,6 +8,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -40,27 +41,20 @@ import java.util.List;
 
 public class MapHandler extends Fragment implements OnMapReadyCallback {
 
+    // Map related objects
     private GoogleMap map;
-    private LocationManager locationManager;
-
-    private Location currentLocation;
-
-    private ListenerRegistration updateListener;
-    public static final String TAG = "debug";
-
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-
     private ClusterManager<Mark> mClusterManager;
 
-
-    private static final long MIN_TIME = 400;
-    private static final float MIN_DISTANCE = 100;
-
-    private OnFragmentInteractionListener mListener;
-
+    // Interaction with parent activity
     private MainActivity parent;
 
-    List<Mark> marksToShow = new ArrayList<Mark>();
+    // Fragment interaction with parent, not used but needed
+    private OnFragmentInteractionListener mListener;
+
+    // Debug
+    public static final String TAG = "MapHandler";
+
+
 
     public MapHandler() {
         // Required empty public constructor
@@ -72,7 +66,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
 
         parent = ((MainActivity) getActivity());
-
     }
 
     @Override
@@ -84,12 +77,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
         mapFragment.getMapAsync(this);
 
         return v;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        updateListener.remove();
     }
 
     @Override
@@ -114,91 +101,23 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
 
         if (map == null) {
-            locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, new LocationListener() {
-                        @Override
-                        public void onLocationChanged(Location location) {
-                            updateCamera(location);
-                            processPendingDistanceMarks();
-                        }
-
-                        @Override
-                        public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                        }
-
-                        @Override
-                        public void onProviderEnabled(String s) {
-                        }
-
-                        @Override
-                        public void onProviderDisabled(String s) {
-
-                        }
-                    }
-            );
-
 
             map = googleMap;
-            map.setMyLocationEnabled(true);
+            mClusterManager = new ClusterManager<>(getActivity(), googleMap);
 
-            mClusterManager = new ClusterManager<>(getActivity(), map);
-
-            updateListener = db.collection("anotaciones")
-                    .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable QuerySnapshot snapshots,
-                                            @Nullable FirebaseFirestoreException e) {
-                            if (e != null) {
-                                Log.w("TAG", "listen:error", e);
-                                return;
-                            }
-
-                            for (DocumentChange document : snapshots.getDocumentChanges()) {
-                                Log.w("TAG", "Añadiendo "+document.getDocument().getId(), e);
-                                DocumentSnapshot d = document.getDocument();
-                                Mark m = document.getDocument().toObject(Mark.class);
-                                m.setId(d.getId());
-                                switch (document.getType()) {
-                                    case ADDED:
-
-                                        // only user's private marks
-                                        if (m.getPrivacy() == 1 && !m.getUser().equals(parent.getUser().getEmail())) {
-                                            continue;
-                                        }
-
-                                        if (m.getPrivacy() == 2) {
-                                            if (currentLocation == null) {
-                                                marksToShow.add(m);
-                                            } else {
-                                                if (!isMarkVisible(m, currentLocation))
-                                                    continue;
-                                            }
-                                        }
-                                        mClusterManager.addItem(m);
-                                        break;
-
-                                    case MODIFIED:
-                                        break;
-
-                                    case REMOVED:
-                                        mClusterManager.removeItem(m);
-                                }
-                            }
-                            mClusterManager.cluster();
-                        }
-                    });
+            getMap().setMyLocationEnabled(true);
             googleMap.setOnCameraIdleListener(mClusterManager);
             googleMap.setOnMarkerClickListener(mClusterManager);
             googleMap.setOnInfoWindowClickListener(mClusterManager);
 
+
+            // CustomRenderer in order to decrease number of elements needed to start clustering
             CustomClusterRenderer renderer = new CustomClusterRenderer(getActivity(), map, mClusterManager, map.getCameraPosition().zoom, map.getMaxZoomLevel());
-            map.setOnCameraMoveListener(renderer);
+            getMap().setOnCameraMoveListener(renderer);
 
-            mClusterManager.setRenderer(renderer);
+            getmClusterManager().setRenderer(renderer);
 
-
-            mClusterManager
+            getmClusterManager()
                     .setOnClusterClickListener(new ClusterManager.OnClusterClickListener<Mark>() {
                         @Override
                         public boolean onClusterClick(final Cluster<Mark> cluster) {
@@ -208,12 +127,12 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
                             }
 
                             final LatLngBounds bounds = builder.build();
-                            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+                            getMap().animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
                             return true;
                         }
                     });
 
-            mClusterManager.setOnClusterItemInfoWindowClickListener(new OnClusterItemInfoWindowClickListener<Mark>() {
+            getmClusterManager().setOnClusterItemInfoWindowClickListener(new OnClusterItemInfoWindowClickListener<Mark>() {
                 @Override
                 public void onClusterItemInfoWindowClick(Mark mark) {
                     Intent intent = new Intent(getActivity(), MarkDetailActivity.class);
@@ -224,41 +143,15 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
 
 
             });
-
         }
     }
 
-    private static boolean isMarkVisible(Mark mark, Location currentLocation) {
-        GeoPoint l = mark.getLocation();
-        Location markLocation = new Location("");
-        markLocation.setLongitude(l.getLongitude());
-        markLocation.setLatitude(l.getLatitude());
-
-        return markLocation.distanceTo(currentLocation) <= mark.getVisibility();
+    public ClusterManager<Mark> getmClusterManager() {
+        return mClusterManager;
     }
 
-    private void processPendingDistanceMarks() {
-        for (Mark mark: marksToShow) {
-            if (!isMarkVisible(mark, currentLocation))
-                    continue;
-
-            mClusterManager.addItem(mark);
-        }
-        mClusterManager.cluster();
-        marksToShow.clear();
-    }
-
-    protected void updateCamera(Location location) {
-        if (location != null) {
-            currentLocation = location;
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 10);
-            map.animateCamera(cameraUpdate);
-        }
-    }
-
-    public Location getCurrentLocation() {
-        return currentLocation;
+    public GoogleMap getMap() {
+        return map;
     }
 
     // Fragment interaction with Activity

@@ -37,7 +37,7 @@ public class Mark implements Parcelable, ClusterItem {
         timestamp = t;
         title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
         privacy = p;
-        visibility = v;
+        setVisibility(v);
         hasImages = i;
     }
 
@@ -49,7 +49,7 @@ public class Mark implements Parcelable, ClusterItem {
         user = in.readString();
         rating = in.readLong();
         privacy = in.readLong();
-        visibility = in.readLong();
+        setVisibility(in.readLong());
         timestamp = in.readParcelable(Timestamp.class.getClassLoader());
         hasImages = (in.readInt() == 0) ? false : true;
         title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
@@ -85,7 +85,7 @@ public class Mark implements Parcelable, ClusterItem {
         parcel.writeString(user);
         parcel.writeLong(rating);
         parcel.writeLong(privacy);
-        parcel.writeLong(visibility);
+        parcel.writeLong(getVisibility());
         parcel.writeParcelable(timestamp, i);
         parcel.writeInt(hasImages ? 1 : 0);
         parcel.writeString(title);
@@ -165,5 +165,9 @@ public class Mark implements Parcelable, ClusterItem {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public void setVisibility(long visibility) {
+        this.visibility = visibility;
     }
 }

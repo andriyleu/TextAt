@@ -1,12 +1,15 @@
 package com.andriy.textat;
 
 import android.Manifest;
-
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -15,74 +18,275 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapHandler.OnFragmentInteractionListener {
 
-
-    private final int REQUEST_FINE_LOCATION = 1;
+    // UI Activity elements
     private MapHandler mapHandler;
-    private FirebaseUser user;
+    private TextView loc;
+    private Toolbar toolbar;
+    private FloatingActionButton fab;
+    private DrawerLayout drawer;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle toggle;
 
+    // Firebase
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private FirebaseUser user;
+    private ListenerRegistration updateListener;
+
+    // Internal data handling
+    private Map<String, Mark> marks;
+    private List<Mark> nearbyMarks;
+
+    // Location provider
+    private final int REQUEST_FINE_LOCATION = 1;
+    private Location currentLocation;
+    private LocationRequest locationRequest;
+    private long UPDATE_INTERVAL = 2 * 1000;  /* 10 secs */
+    private long FASTEST_INTERVAL = 2000; /* 2 sec */
+    private boolean boot = false;
+
+    // Debug related
+    public static final String TAG = "MainActivity";
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    private void bindElements() {
+        loc = findViewById(R.id.showLocation);
+        mapHandler = (MapHandler) this.getSupportFragmentManager().findFragmentById(R.id.map);
+        toolbar = findViewById(R.id.toolbar);
+        fab = findViewById(R.id.fab);
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Get user
+        // Bind XML to Objects
+        bindElements();
+
+        // Get user info from LoginActivity
         Intent i = getIntent();
-        user =  i.getExtras().getParcelable("user");
+        user = i.getExtras().getParcelable("user");
 
-        mapHandler = (MapHandler) this.getSupportFragmentManager().findFragmentById(R.id.map);
+        // Set-up data structures to handle mark's info
+        marks = new HashMap<>();
+        nearbyMarks = new ArrayList<>();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        // Check if user has given app location permissions
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            getLocationPermissions();
+        }
+
+        startLocationUpdates();
+
+        // Set up listener that parses initially everything and then receive updates
+        updateListener = db.collection("anotaciones")
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w("TAG", "listen:error", e);
+                            return;
+                        }
+
+                        for (DocumentChange document : snapshots.getDocumentChanges()) {
+                            Log.w("TAG", "Añadiendo " + document.getDocument().getId(), e);
+                            DocumentSnapshot d = document.getDocument();
+                            String id = d.getId();
+                            Mark m = document.getDocument().toObject(Mark.class);
+                            m.setId(id);
+                            switch (document.getType()) {
+                                case ADDED:
+
+                                    // Case: Private marks
+                                    if (m.getPrivacy() == 1 && !m.getUser().equals(user.getEmail())) {
+                                        continue;
+                                    }
+
+                                    // Case: Nearby marks
+                                    if (m.getPrivacy() == 2) {
+                                        nearbyMarks.add(m);
+                                        if (currentLocation != null) {
+                                            if (isMarkVisible(m, currentLocation)) {
+                                                mapHandler.getmClusterManager().addItem(m);
+                                                continue;
+                                            }
+                                        }
+                                    }
+
+                                    mapHandler.getmClusterManager().addItem(m);
+                                    marks.put(id, m);
+                                    break;
+
+                                case MODIFIED:
+                                    Iterator<Mark> i1 = nearbyMarks.iterator();
+                                    while (i1.hasNext()) {
+                                        Mark mark = i1.next();
+                                        if (id.equals(mark.getId())) {
+                                            mark.setVisibility(m.getVisibility());
+                                        }
+                                    }
+                                    break;
+
+                                case REMOVED:
+                                    marks.remove(id);
+                                    Iterator<Mark> i2 = nearbyMarks.iterator();
+                                    while (i2.hasNext()) {
+                                        Mark mark = i2.next();
+                                        if (mark.getId() == id) {
+                                            nearbyMarks.remove(i2);
+                                        }
+                                    }
+                            }
+                        }
+                    }
+                });
+
+
+        // Rest of UI set up
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, AddMarkActivity.class);
-                intent.putExtra("location", mapHandler.getCurrentLocation());
+                intent.putExtra("location", currentLocation);
                 startActivity(intent);
             }
         });
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            getLocationPermissions();
-
-            return;
-        }
-
     }
+
+    public void updateNearbyMarks() {
+
+        if (!nearbyMarks.isEmpty()) {
+            for (Mark mark : nearbyMarks) {
+                if (!isMarkVisible(mark, currentLocation)) {
+                    mapHandler.getmClusterManager().removeItem(mark); // If mark isn't visible anymore remove it from cluster
+                    continue;
+                } else {
+                    mapHandler.getmClusterManager().addItem(mark); // If mark becomes visible add it to cluster
+                }
+            }
+            mapHandler.getmClusterManager().cluster(); // Re-cluster
+        }
+    }
+
+    public void updateCamera(Location location) {
+        if (location != null) {
+            currentLocation = location;
+            loc.setText("(" + location.getLatitude() + ", " + location.getLongitude() + ")");
+
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 10);
+            mapHandler.getMap().animateCamera(cameraUpdate);
+        }
+    }
+
+    private static boolean isMarkVisible(Mark mark, Location currentLocation) {
+        GeoPoint l = mark.getLocation();
+        Location markLocation = new Location("");
+        markLocation.setLongitude(l.getLongitude());
+        markLocation.setLatitude(l.getLatitude());
+
+        return markLocation.distanceTo(currentLocation) <= mark.getVisibility();
+    }
+
+    public Location getCurrentLocation() {
+        return currentLocation;
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startLocationUpdates() {
+        locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(locationRequest);
+        LocationSettingsRequest locationSettingsRequest = builder.build();
+
+        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+        settingsClient.checkLocationSettings(locationSettingsRequest);
+
+        LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(locationRequest, new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+
+                        if (!boot) {
+                            boot = true;
+                            updateCamera(locationResult.getLastLocation());
+                        }
+
+                        updateNearbyMarks();
+                    }
+
+                },
+                Looper.myLooper());
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
 
     @Override
     protected void onResume() {
         super.onResume();
-
-
     }
-
 
     @Override
     public void onBackPressed() {
@@ -137,7 +341,7 @@ public class MainActivity extends AppCompatActivity
 
 
         } else if (id == R.id.nav_send) {
-
+            // Disconnect
             AuthUI.getInstance()
                     .signOut(this)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -185,5 +389,13 @@ public class MainActivity extends AppCompatActivity
 
     public FirebaseUser getUser() {
         return user;
+    }
+
+    public Map<String, Mark> getMarks() {
+        return marks;
+    }
+
+    public List<Mark> getNearbyMarks() {
+        return nearbyMarks;
     }
 }
