@@ -105,19 +105,19 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
             map = googleMap;
             mClusterManager = new ClusterManager<>(getActivity(), googleMap);
 
-            getMap().setMyLocationEnabled(true);
-            googleMap.setOnCameraIdleListener(mClusterManager);
-            googleMap.setOnMarkerClickListener(mClusterManager);
-            googleMap.setOnInfoWindowClickListener(mClusterManager);
-
+            map.setMyLocationEnabled(true);
+            map.setOnCameraIdleListener(mClusterManager);
+            map.setOnMarkerClickListener(mClusterManager);
+            map.setOnInfoWindowClickListener(mClusterManager);
+            map.getUiSettings().setMapToolbarEnabled(false);
 
             // CustomRenderer in order to decrease number of elements needed to start clustering
             CustomClusterRenderer renderer = new CustomClusterRenderer(getActivity(), map, mClusterManager, map.getCameraPosition().zoom, map.getMaxZoomLevel());
-            getMap().setOnCameraMoveListener(renderer);
+            map.setOnCameraMoveListener(renderer);
 
-            getmClusterManager().setRenderer(renderer);
+            mClusterManager.setRenderer(renderer);
 
-            getmClusterManager()
+            mClusterManager
                     .setOnClusterClickListener(new ClusterManager.OnClusterClickListener<Mark>() {
                         @Override
                         public boolean onClusterClick(final Cluster<Mark> cluster) {
@@ -132,7 +132,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
                         }
                     });
 
-            getmClusterManager().setOnClusterItemInfoWindowClickListener(new OnClusterItemInfoWindowClickListener<Mark>() {
+            mClusterManager.setOnClusterItemInfoWindowClickListener(new OnClusterItemInfoWindowClickListener<Mark>() {
                 @Override
                 public void onClusterItemInfoWindowClick(Mark mark) {
                     Intent intent = new Intent(getActivity(), MarkDetailActivity.class);
