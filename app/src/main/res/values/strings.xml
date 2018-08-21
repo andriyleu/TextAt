@@ -138,5 +138,8 @@
     <string name="action_search">Buscar..</string>
     <string name="title_activity_mark_list">MarkListActivity</string>
 
+    //sidebar menu
+    <string name="myMarks">Mis anotaciones</string>
+    <string name="myMentions">Mis menciones</string>
 
 </resources>

@@ -21,6 +21,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.search.saas.AlgoliaException;
+import com.algolia.search.saas.CompletionHandler;
+import com.algolia.search.saas.Query;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -32,12 +35,16 @@ import com.luseen.autolinklibrary.AutoLinkMode;
 import com.luseen.autolinklibrary.AutoLinkOnClickListener;
 import com.luseen.autolinklibrary.AutoLinkTextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class MarkDetailActivity extends AppCompatActivity {
+public class MarkDetailActivity extends AppCompatActivity  implements CompletionHandler{
 
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
@@ -64,9 +71,8 @@ public class MarkDetailActivity extends AppCompatActivity {
     private boolean zoomOut = false;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-
     StorageReference storageRef;
+    SearchHandler searchHandler;
 
 
     private void bindElements() {
@@ -91,6 +97,8 @@ public class MarkDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mark_detail);
+
+        searchHandler = new SearchHandler();
 
         bindElements();
 
@@ -125,6 +133,10 @@ public class MarkDetailActivity extends AppCompatActivity {
                 if (autoLinkMode == AutoLinkMode.MODE_MENTION) {
 
                 }
+
+                if (autoLinkMode == AutoLinkMode.MODE_HASHTAG) {
+                    searchHandler.getIndex().searchAsync(new Query(matchedText), MarkDetailActivity.this);
+                }
             }
         });
 
@@ -135,11 +147,11 @@ public class MarkDetailActivity extends AppCompatActivity {
         m = mark;
 
         // mark id
-        markId.setText("ID de la anotación: " + idDocument);
+        markId.setText("ID de la anotación: " + m.getId());
         markId.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("id", idDocument);
+                ClipData clip = ClipData.newPlainText("id", m.getId());
                 clipboard.setPrimaryClip(clip);
                 Toast.makeText(MarkDetailActivity.this, "Se ha copiado el ID de la anotación al portapapeles",
                         Toast.LENGTH_LONG).show();
@@ -216,11 +228,12 @@ public class MarkDetailActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.deleteMark) {
-            db.collection("anotaciones").document(idDocument)
+            db.collection("anotaciones").document(m.getId())
                     .delete()
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
+                            searchHandler.removeMark(m);
                             finish();
                         }
                     })
@@ -238,7 +251,7 @@ public class MarkDetailActivity extends AppCompatActivity {
     private void setImages() {
         int imageNumber = 1;
         for (final ImageView image : images) {
-            final StorageReference ref = FirebaseStorage.getInstance().getReference().child("images/" + idDocument + "/" + Integer.toString(imageNumber++) + ".jpg");
+            final StorageReference ref = FirebaseStorage.getInstance().getReference().child("images/" + m.getId() + "/" + Integer.toString(imageNumber++) + ".jpg");
 
             ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
@@ -262,4 +275,26 @@ public class MarkDetailActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
+        JSONArray hits  = null;
+
+        try {
+            ArrayList<Mark> searchMarks = new ArrayList<>();
+            hits = jsonObject.getJSONArray("hits");
+            for (int i = 0; i < hits.length(); i++) {
+                searchMarks.add(new Mark(hits.getJSONObject(i)));
+            }
+
+            if (searchMarks.isEmpty())
+                return;
+
+            Intent intent = new Intent(MarkDetailActivity.this, MarkListActivity.class);
+            intent.putParcelableArrayListExtra("marks", searchMarks);
+            startActivity(intent);
+
+        } catch (JSONException e1) {
+            e1.printStackTrace();
+        }
+    }
 }

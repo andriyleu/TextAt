@@ -1,10 +1,14 @@
 package com.andriy.textat;
 
+import android.content.Intent;
+
 import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.Client;
+import com.algolia.search.saas.CompletionHandler;
 import com.algolia.search.saas.Index;
 import com.algolia.search.saas.Query;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,17 +29,22 @@ public class SearchHandler {
         return index;
     }
 
-    public List<String> queryUserMarks(String username) throws AlgoliaException, JSONException {
-        List<String> markIds = new ArrayList<>();
-        JSONObject myMarks = index.search(new Query(username), null);
-        Iterator<String> keys = myMarks.keys();
+    public void addMark(Mark m) throws JSONException {
+        index.addObjectAsync(new JSONObject().put("objectID", m.getId())
+                .put("description", m.getDescription())
+                .put("latitude", m.getLocation().getLatitude())
+                .put("longitude", m.getLocation().getLongitude())
+                .put("privacy", m.getPrivacy())
+                .put("rating", m.getRating())
+                .put("uri", m.getUri())
+                .put("user", m.getUser())
+                .put("date", m.getTimestamp().getSeconds())
+                .put("visibility", m.getVisibility())
+                .put("hasImages", m.isHasImages())
+                , null);
+    }
 
-        while (keys.hasNext()) {
-                String key = keys.next();
-                if (myMarks.get(key) instanceof JSONObject) {
-                    markIds.add(key);
-                }
-        }
-        return markIds;
+    public void removeMark(Mark m) {
+        index.deleteObjectAsync(m.getId(), null);
     }
 }

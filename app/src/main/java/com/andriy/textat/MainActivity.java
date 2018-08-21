@@ -191,6 +191,7 @@ public class MainActivity extends AppCompatActivity
                                     break;
 
                                 case REMOVED:
+                                    mapHandler.getmClusterManager().removeItem(marks.get(id));
                                     marks.remove(id);
                                     Iterator<Mark> i2 = nearbyMarks.iterator();
                                     while (i2.hasNext()) {
@@ -201,6 +202,7 @@ public class MainActivity extends AppCompatActivity
                                     }
                             }
                         }
+                        mapHandler.getmClusterManager().cluster();
                     }
                 });
 
@@ -348,36 +350,8 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-
-            CompletionHandler completionHandler = new CompletionHandler() {
-                @Override
-                public void requestCompleted(JSONObject content, AlgoliaException error) {
-
-                    ArrayList<Mark> marksList = new ArrayList<>();
-
-                    try {
-                        JSONArray hits  = content.getJSONArray("hits");
-                        for (int i = 0; i < hits.length(); i++) {
-                            JSONObject jsonObject = hits.getJSONObject(i);
-                            String id = jsonObject.getString("objectID");
-                            marksList.add(marks.get(id));
-                        }
-
-                        Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
-                        intent.putParcelableArrayListExtra("marks", marksList);
-                        startActivity(intent);
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-
-                }
-            };
-
-            index.searchAsync(new Query(user.getEmail()), completionHandler);
-
+        if (id == R.id.myMarks) {
+            handleMyMarks();
 
         } else if (id == R.id.nav_gallery) {
 
@@ -408,6 +382,36 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void handleMyMarks() {
+        CompletionHandler completionHandler = new CompletionHandler() {
+            @Override
+            public void requestCompleted(JSONObject content, AlgoliaException error) {
+
+                ArrayList<Mark> marksList = new ArrayList<>();
+
+                try {
+                    JSONArray hits  = content.getJSONArray("hits");
+                    for (int i = 0; i < hits.length(); i++) {
+                        JSONObject jsonObject = hits.getJSONObject(i);
+                        String id = jsonObject.getString("objectID");
+                        marksList.add(marks.get(id));
+                    }
+
+                    Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
+                    intent.putParcelableArrayListExtra("marks", marksList);
+                    startActivity(intent);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        };
+
+        index.searchAsync(new Query(user.getEmail()), completionHandler);
     }
 
 

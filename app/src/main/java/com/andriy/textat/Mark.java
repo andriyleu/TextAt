@@ -10,6 +10,11 @@ import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.maps.android.clustering.ClusterItem;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Date;
+
 public class Mark implements Parcelable, ClusterItem {
     private GeoPoint location;
     private String title;
@@ -39,6 +44,25 @@ public class Mark implements Parcelable, ClusterItem {
         privacy = p;
         setVisibility(v);
         hasImages = i;
+    }
+
+    public Mark(JSONObject json) {
+        try {
+            id = json.getString("objectID");
+            location = new GeoPoint(json.getDouble("latitude"), json.getDouble("longitude"));
+            description = json.getString("description");
+            uri = json.getString("uri");
+            rating = json.getLong("rating");
+            visibility = json.getLong("visibility");
+            timestamp = new Timestamp(new Date(json.getInt("date")));
+            title = getTitle();
+            user = json.getString("user");
+            hasImages = json.getBoolean("hasImages");
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public Mark(Parcel in) {

@@ -35,14 +35,18 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import org.json.JSONException;
+
 import java.io.IOException;
 
 
 public class AddMarkActivity extends AppCompatActivity {
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private StorageReference mStorageRef;
 
+    // Database related stuff
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private StorageReference mStorageRef;
     private FirebaseAuth mAuth;
+    private SearchHandler searchHandler;
 
     public static final String TAG = "debug";
 
@@ -94,6 +98,8 @@ public class AddMarkActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_mark);
+
+        searchHandler = new SearchHandler();
 
         // store
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -206,13 +212,21 @@ public class AddMarkActivity extends AppCompatActivity {
                     }
                 }
 
-                Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), url, FirebaseAuth.getInstance().getCurrentUser().getEmail(), Timestamp.now(), rating, selectedPrivacy, selectedVisibility, hasImages);
+                final Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), url, FirebaseAuth.getInstance().getCurrentUser().getEmail(), Timestamp.now(), rating, selectedPrivacy, selectedVisibility, hasImages);
                 db.collection("anotaciones")
                         .add(m)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                             @Override
                             public void onSuccess(DocumentReference documentReference) {
                                 String docRef = documentReference.getId();
+                                m.setId(docRef);
+
+                                try {
+                                    searchHandler.addMark(m);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
                                 if (image1 != null) {
                                     uploadImage(image1, docRef, 1);
                                 }

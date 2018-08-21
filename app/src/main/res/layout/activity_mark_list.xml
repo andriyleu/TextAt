@@ -7,7 +7,7 @@
     tools:context=".MarkListActivity">
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar2"
+        android:id="@+id/listToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
@@ -26,5 +26,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar2" />
+        app:layout_constraintTop_toBottomOf="@+id/listToolbar" />
 </android.support.constraint.ConstraintLayout>
