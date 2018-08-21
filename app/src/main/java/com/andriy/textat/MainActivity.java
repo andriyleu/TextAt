@@ -25,6 +25,11 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.search.saas.AlgoliaException;
+import com.algolia.search.saas.Client;
+import com.algolia.search.saas.CompletionHandler;
+import com.algolia.search.saas.Index;
+import com.algolia.search.saas.Query;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -47,6 +52,10 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -67,9 +76,13 @@ public class MainActivity extends AppCompatActivity
 
     // Firebase
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
-
     private FirebaseUser user;
     private ListenerRegistration updateListener;
+
+    // Algolia
+    Client client = new Client("KAJVMYN673", "5d42104707798a805f13ff8658a595dc");
+    Index index;
+    SearchHandler searchHandler;
 
     // Internal data handling
     private Map<String, Mark> marks;
@@ -122,6 +135,10 @@ public class MainActivity extends AppCompatActivity
         }
 
         startLocationUpdates();
+
+        // Algolia
+        index = client.getIndex("anotaciones");
+
 
         // Set up listener that parses initially everything and then receive updates
         updateListener = db.collection("anotaciones")
@@ -302,6 +319,11 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        /*MenuItem searchItem = menu.findItem(R.id.action_search);
+        SearchView searchView =
+                (SearchView)menu.findItem(R.id.action_search).getActionView();
+        searchView.setMaxWidth(Integer.MAX_VALUE);*/
+
         return true;
     }
 
@@ -313,7 +335,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_search) {
             return true;
         }
 
@@ -327,7 +349,36 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
-            // Handle the camera action
+
+            CompletionHandler completionHandler = new CompletionHandler() {
+                @Override
+                public void requestCompleted(JSONObject content, AlgoliaException error) {
+
+                    ArrayList<Mark> marksList = new ArrayList<>();
+
+                    try {
+                        JSONArray hits  = content.getJSONArray("hits");
+                        for (int i = 0; i < hits.length(); i++) {
+                            JSONObject jsonObject = hits.getJSONObject(i);
+                            String id = jsonObject.getString("objectID");
+                            marksList.add(marks.get(id));
+                        }
+
+                        Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
+                        intent.putParcelableArrayListExtra("marks", marksList);
+                        startActivity(intent);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+
+                }
+            };
+
+            index.searchAsync(new Query(user.getEmail()), completionHandler);
+
+
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
@@ -378,6 +429,7 @@ public class MainActivity extends AppCompatActivity
                 }
         }
     }
+
 
     private void getLocationPermissions() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);

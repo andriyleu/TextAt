@@ -52,7 +52,8 @@ public class Mark implements Parcelable, ClusterItem {
         setVisibility(in.readLong());
         timestamp = in.readParcelable(Timestamp.class.getClassLoader());
         hasImages = (in.readInt() == 0) ? false : true;
-        title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
+        id = in.readString();
+        title = in.readString();
     }
 
     public static final Creator<Mark> CREATOR = new Creator<Mark>() {
@@ -88,7 +89,8 @@ public class Mark implements Parcelable, ClusterItem {
         parcel.writeLong(getVisibility());
         parcel.writeParcelable(timestamp, i);
         parcel.writeInt(hasImages ? 1 : 0);
-        parcel.writeString(title);
+        parcel.writeString(id);
+        parcel.writeString(getTitle());
     }
 
 
@@ -137,7 +139,7 @@ public class Mark implements Parcelable, ClusterItem {
     @Exclude
     @Override
     public String getTitle() {
-        return title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
+        return "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
     }
 
     @Exclude

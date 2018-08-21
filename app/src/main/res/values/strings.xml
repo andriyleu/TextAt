@@ -135,7 +135,8 @@
         <item>1000m</item>
     </string-array>
 
-
+    <string name="action_search">Buscar..</string>
+    <string name="title_activity_mark_list">MarkListActivity</string>
 
 
 </resources>

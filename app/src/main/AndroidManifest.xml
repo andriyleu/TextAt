@@ -28,9 +28,9 @@
 
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation"
             android:label="@string/title_activity_main"
-            android:theme="@style/AppTheme"
-            android:configChanges="orientation"/>
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".AddMarkActivity"
             android:label="@string/title_activity_add_mark"
@@ -38,7 +38,10 @@
         <activity
             android:name=".MarkDetailActivity"
             android:label="@string/title_activity_mark_detail"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".MarkListActivity"
+            android:label="@string/title_activity_mark_list"></activity>
     </application>
 
 </manifest>
