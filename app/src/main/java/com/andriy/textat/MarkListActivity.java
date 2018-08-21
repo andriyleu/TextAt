@@ -9,7 +9,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -54,6 +53,9 @@ public class MarkListActivity extends AppCompatActivity
 
         Intent intent = getIntent();
         marks = intent.getParcelableArrayListExtra("marks");
+        String title = intent.getStringExtra("title");
+
+        getSupportActionBar().setTitle(title);
 
 
         CustomListAdapter adapter = new CustomListAdapter(marks, this);

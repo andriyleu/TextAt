@@ -4,13 +4,8 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-
-import com.andriy.textat.Mark;
-import com.andriy.textat.R;
 
 import java.util.ArrayList;
 
@@ -19,7 +14,6 @@ public class CustomListAdapter extends ArrayAdapter<Mark> implements View.OnClic
     private ArrayList<Mark> marks;
     private Context mContext;
 
-    // View lookup cache
     private static class ViewHolder {
         TextView markId;
         TextView description;
@@ -44,10 +38,8 @@ public class CustomListAdapter extends ArrayAdapter<Mark> implements View.OnClic
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        // Get the data item for this position
         Mark mark = getItem(position);
-        // Check if an existing view is being reused, otherwise inflate the view
-        ViewHolder viewHolder; // view lookup cache stored in tag
+        ViewHolder viewHolder;
 
         final View result;
 
@@ -70,17 +62,12 @@ public class CustomListAdapter extends ArrayAdapter<Mark> implements View.OnClic
             result = convertView;
         }
 
-        /*Animation animation = AnimationUtils.loadAnimation(mContext, (position > lastPosition) ? R.anim. : R.anim.down_from_top);
-        result.startAnimation(animation);
-        lastPosition = position;*/
-
         viewHolder.markId.setText(mark.getId());
         viewHolder.description.setText(mark.getSnippet());
-        viewHolder.date.setText(mark.getTimestamp().toDate().toString()); // hacer método en clase mark
+        viewHolder.date.setText(mark.getDate());
         viewHolder.title.setText(mark.getTitle());
         viewHolder.user.setText(mark.getUser());
 
-        // Return the completed view to render on screen
         return convertView;
     }
 }

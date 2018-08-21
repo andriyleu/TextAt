@@ -39,12 +39,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-public class MarkDetailActivity extends AppCompatActivity  implements CompletionHandler{
+public class MarkDetailActivity extends AppCompatActivity implements CompletionHandler {
 
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
@@ -73,6 +71,8 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     StorageReference storageRef;
     SearchHandler searchHandler;
+
+    private String searching;
 
 
     private void bindElements() {
@@ -121,7 +121,7 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
         // desc
 
         description.addAutoLinkMode(
-                AutoLinkMode.MODE_HASHTAG, AutoLinkMode.MODE_MENTION);
+                AutoLinkMode.MODE_HASHTAG, AutoLinkMode.MODE_MENTION, AutoLinkMode.MODE_EMAIL);
 
         description.setMentionModeColor(ContextCompat.getColor(this, R.color.colorAccent));
         description.setHashtagModeColor(ContextCompat.getColor(this, R.color.colorAccent));
@@ -130,11 +130,29 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
         description.setAutoLinkOnClickListener(new AutoLinkOnClickListener() {
             @Override
             public void onAutoLinkTextClick(AutoLinkMode autoLinkMode, String matchedText) {
-                if (autoLinkMode == AutoLinkMode.MODE_MENTION) {
 
+                searching = matchedText;
+
+                if (autoLinkMode == AutoLinkMode.MODE_MENTION) {
+                    searchHandler.getIndex().getObjectAsync(matchedText.substring(2, matchedText.length()), new CompletionHandler() {
+                                @Override
+                                public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
+                                    Intent intent = new Intent(MarkDetailActivity.this, MarkDetailActivity.class);
+                                    intent.putExtra("mark", new Mark(jsonObject));
+                                    startActivity(intent);
+                                }
+                            }
+                    );
                 }
 
-                if (autoLinkMode == AutoLinkMode.MODE_HASHTAG) {
+                if (autoLinkMode == AutoLinkMode.MODE_EMAIL) {
+                    Query q = new Query(matchedText);
+                    q.setFacets("user:".concat(matchedText)).setFacets("privacy:0");
+                    searchHandler.getIndex().searchAsync(q, MarkDetailActivity.this);
+                }
+
+                if (autoLinkMode == AutoLinkMode.MODE_HASHTAG)
+                {
                     searchHandler.getIndex().searchAsync(new Query(matchedText), MarkDetailActivity.this);
                 }
             }
@@ -143,12 +161,17 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
         // Get info from extras
         Intent i = getIntent();
         Mark mark = (Mark) i.getExtras().getParcelable("mark");
-        idDocument = i.getExtras().getString("id");
+        idDocument = i.getExtras().
+
+                getString("id");
+
         m = mark;
 
         // mark id
         markId.setText("ID de la anotación: " + m.getId());
-        markId.setOnClickListener(new View.OnClickListener() {
+        markId.setOnClickListener(new View.OnClickListener()
+
+        {
             public void onClick(View v) {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("id", m.getId());
@@ -159,32 +182,42 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
         });
 
         // visibility
-        if (m.getPrivacy() == 2) {
+        if (m.getPrivacy() == 2)
+
+        {
             visibility.setText("Esta anotación es visible sólo a " + m.getVisibility() + "m.");
         }
 
 
         createdBy.setText("Anotación creada por " + mark.getUser());
-        getSupportActionBar().setTitle(mark.getTitle());
+
+        getSupportActionBar().
+
+                setTitle(mark.getTitle());
         description.setAutoLinkText(mark.getDescription());
 
         setImages();
 
         // rating setUp
         String markRating = Long.toString(mark.getRating());
-        if (mark.getRating() == 1) {
+        if (mark.getRating() == 1)
+
+        {
             markRating = "+" + markRating;
         }
         rating.setText(markRating);
 
         //timestamp to spanish
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm - dd/MM/yyyy");
 
-        timestamp.setText(sdf.format(mark.getTimestamp().toDate()));
+        timestamp.setText(m.getDate());
 
         // uri
 
-        if (!m.getUri().isEmpty()) {
+        if (!m.getUri().
+
+                isEmpty())
+
+        {
             uri.setVisibility(View.VISIBLE);
             uri.setText(Html.fromHtml("<a href=" + m.getUri().toString() + "> URI"));
             uri.setMovementMethod(LinkMovementMethod.getInstance());
@@ -200,7 +233,9 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
         }
 
         // images setUp
-        if (m.isHasImages()) {
+        if (m.isHasImages())
+
+        {
             separator.setVisibility(View.VISIBLE);
             imageLayout.setVisibility(View.VISIBLE);
 
@@ -208,6 +243,7 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
             setImages();
 
         }
+
     }
 
     @Override
@@ -277,7 +313,7 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
 
     @Override
     public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
-        JSONArray hits  = null;
+        JSONArray hits = null;
 
         try {
             ArrayList<Mark> searchMarks = new ArrayList<>();
@@ -291,6 +327,7 @@ public class MarkDetailActivity extends AppCompatActivity  implements Completion
 
             Intent intent = new Intent(MarkDetailActivity.this, MarkListActivity.class);
             intent.putParcelableArrayListExtra("marks", searchMarks);
+            intent.putExtra("title", searching);
             startActivity(intent);
 
         } catch (JSONException e1) {

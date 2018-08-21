@@ -208,6 +208,7 @@ public class MainActivity extends AppCompatActivity
 
 
         // Rest of UI set up
+
         setSupportActionBar(toolbar);
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -353,19 +354,15 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.myMarks) {
             handleMyMarks();
 
-        } else if (id == R.id.nav_gallery) {
+        } else if (id == R.id.myMentions) {
+            handleMyMentions();
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
+        } else if (id == R.id.settings) {
 
             Intent intent = new Intent(this, MarkDetailActivity.class);
             startActivity(intent);
 
-
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.logout) {
             // Disconnect
             AuthUI.getInstance()
                     .signOut(this)
@@ -392,7 +389,7 @@ public class MainActivity extends AppCompatActivity
                 ArrayList<Mark> marksList = new ArrayList<>();
 
                 try {
-                    JSONArray hits  = content.getJSONArray("hits");
+                    JSONArray hits = content.getJSONArray("hits");
                     for (int i = 0; i < hits.length(); i++) {
                         JSONObject jsonObject = hits.getJSONObject(i);
                         String id = jsonObject.getString("objectID");
@@ -401,6 +398,7 @@ public class MainActivity extends AppCompatActivity
 
                     Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
                     intent.putParcelableArrayListExtra("marks", marksList);
+                    intent.putExtra("title", "Mis anotaciones");
                     startActivity(intent);
 
                 } catch (JSONException e) {
@@ -411,9 +409,45 @@ public class MainActivity extends AppCompatActivity
             }
         };
 
-        index.searchAsync(new Query(user.getEmail()), completionHandler);
+        Query q = new Query(user.getEmail());
+        q.setRestrictSearchableAttributes("user");
+
+        index.searchAsync(q, completionHandler);
     }
 
+    private void handleMyMentions() {
+        CompletionHandler completionHandler = new CompletionHandler() {
+            @Override
+            public void requestCompleted(JSONObject content, AlgoliaException error) {
+
+                ArrayList<Mark> marksList = new ArrayList<>();
+
+                try {
+                    JSONArray hits = content.getJSONArray("hits");
+                    for (int i = 0; i < hits.length(); i++) {
+                        JSONObject jsonObject = hits.getJSONObject(i);
+                        String id = jsonObject.getString("objectID");
+                        marksList.add(marks.get(id));
+                    }
+
+                    Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
+                    intent.putParcelableArrayListExtra("marks", marksList);
+                    intent.putExtra("title", "Mis menciones");
+                    startActivity(intent);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        };
+
+        Query q = new Query(user.getEmail());
+        q.setRestrictSearchableAttributes("description");
+
+        index.searchAsync(q, completionHandler);
+    }
 
     @Override
     public void onFragmentInteraction(Uri uri) {

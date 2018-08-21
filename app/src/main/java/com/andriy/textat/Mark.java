@@ -13,6 +13,7 @@ import com.google.maps.android.clustering.ClusterItem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Mark implements Parcelable, ClusterItem {
@@ -54,7 +55,7 @@ public class Mark implements Parcelable, ClusterItem {
             uri = json.getString("uri");
             rating = json.getLong("rating");
             visibility = json.getLong("visibility");
-            timestamp = new Timestamp(new Date(json.getInt("date")));
+            timestamp = new Timestamp(new Date(json.getLong("date") *1000L));
             title = getTitle();
             user = json.getString("user");
             hasImages = json.getBoolean("hasImages");
@@ -169,6 +170,9 @@ public class Mark implements Parcelable, ClusterItem {
     @Exclude
     @Override
     public String getSnippet() {
+        if (description.length() > 100) {
+            return description.substring(0, 100).concat("..");
+        }
         return description;
     }
 
@@ -176,6 +180,13 @@ public class Mark implements Parcelable, ClusterItem {
     public String getId() {
         return id;
     }
+
+    @Exclude
+    public String getDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm - dd/MM/yyyy");
+        return sdf.format(timestamp.toDate());
+    }
+
 
     @Exclude
     public void setId(String id) {
@@ -192,6 +203,7 @@ public class Mark implements Parcelable, ClusterItem {
     public int hashCode() {
         return id.hashCode();
     }
+
 
     public void setVisibility(long visibility) {
         this.visibility = visibility;
