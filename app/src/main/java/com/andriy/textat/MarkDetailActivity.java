@@ -50,7 +50,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
     private AutoLinkTextView description;
     private TextView rating;
     private TextView timestamp;
-    private TextView uri;
+    private ImageView uri;
     private TextView markId;
     private TextView visibility;
     private List<ImageView> images;
@@ -98,13 +98,21 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mark_detail);
 
-        searchHandler = new SearchHandler();
-
         bindElements();
 
-        //base
+        // Get info from extras
+        Intent i = getIntent();
+        Mark mark = (Mark) i.getExtras().getParcelable("mark");
+        idDocument = i.getExtras().getString("id");
+        m = mark;
+
+        // Firebase
         storage = FirebaseStorage.getInstance();
         storageRef = storage.getReference();
+
+
+        // Algolia
+        searchHandler = new SearchHandler();
 
         // Toolbar setup
         setSupportActionBar(toolbar);
@@ -118,8 +126,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
             }
         });
 
-        // desc
-
+        // Description set up w/ onClicks on # (hashtags) and @ (mentions)
         description.addAutoLinkMode(
                 AutoLinkMode.MODE_HASHTAG, AutoLinkMode.MODE_MENTION, AutoLinkMode.MODE_EMAIL);
 
@@ -146,29 +153,19 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                 }
 
                 if (autoLinkMode == AutoLinkMode.MODE_EMAIL) {
-                    Query q = new Query(matchedText);
-                    q.setFacets("user:".concat(matchedText)).setFacets("privacy:0");
-                    searchHandler.getIndex().searchAsync(q, MarkDetailActivity.this);
+                    searchHandler.getIndex().searchAsync(searchHandler.getUserMarks(matchedText, false), MarkDetailActivity.this);
                 }
 
-                if (autoLinkMode == AutoLinkMode.MODE_HASHTAG)
-                {
-                    searchHandler.getIndex().searchAsync(new Query(matchedText), MarkDetailActivity.this);
+                if (autoLinkMode == AutoLinkMode.MODE_HASHTAG) {
+                    searchHandler.getIndex().searchAsync(searchHandler.getHashtag(matchedText), MarkDetailActivity.this);
                 }
             }
         });
 
-        // Get info from extras
-        Intent i = getIntent();
-        Mark mark = (Mark) i.getExtras().getParcelable("mark");
-        idDocument = i.getExtras().
+        description.setAutoLinkText(mark.getDescription());
 
-                getString("id");
-
-        m = mark;
-
-        // mark id
-        markId.setText("ID de la anotación: " + m.getId());
+        // Mark id allowing user to copy on click
+        markId.setText("ID: " + m.getId());
         markId.setOnClickListener(new View.OnClickListener()
 
         {
@@ -181,46 +178,39 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
             }
         });
 
-        // visibility
-        if (m.getPrivacy() == 2)
-
-        {
-            visibility.setText("Esta anotación es visible sólo a " + m.getVisibility() + "m.");
+        // Set visibility if needed
+        long privacy = m.getPrivacy();
+        switch ((int) privacy) {
+            case 0:
+                visibility.setText("Privacidad: pública.");
+                break;
+            case 1:
+                visibility.setText("Privacidad: privada.");
+                break;
+            case 2:
+                visibility.setText("Privacidad: visible a " + m.getVisibility() + "m.");
+                break;
         }
 
 
+        // Title and subtitle (Mark coordinates and user)
         createdBy.setText("Anotación creada por " + mark.getUser());
-
-        getSupportActionBar().
-
-                setTitle(mark.getTitle());
-        description.setAutoLinkText(mark.getDescription());
-
-        setImages();
+        getSupportActionBar().setTitle(mark.getTitle());
 
         // rating setUp
         String markRating = Long.toString(mark.getRating());
-        if (mark.getRating() == 1)
-
-        {
+        if (mark.getRating() == 1) {
             markRating = "+" + markRating;
         }
-        rating.setText(markRating);
+
+        rating.setText("Puntuación: " + markRating);
 
         //timestamp to spanish
-
-        timestamp.setText(m.getDate());
+        timestamp.setText("Fecha de publicación: " + m.getDate());
 
         // uri
-
-        if (!m.getUri().
-
-                isEmpty())
-
-        {
+        if (!m.getUri().isEmpty()) {
             uri.setVisibility(View.VISIBLE);
-            uri.setText(Html.fromHtml("<a href=" + m.getUri().toString() + "> URI"));
-            uri.setMovementMethod(LinkMovementMethod.getInstance());
 
             uri.setOnClickListener(new View.OnClickListener() {
                                        public void onClick(View v) {
@@ -233,15 +223,12 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         }
 
         // images setUp
-        if (m.isHasImages())
-
-        {
+        if (m.isHasImages()) {
             separator.setVisibility(View.VISIBLE);
             imageLayout.setVisibility(View.VISIBLE);
 
             // Get images from Storage
             setImages();
-
         }
 
     }
@@ -322,7 +309,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                 searchMarks.add(new Mark(hits.getJSONObject(i)));
             }
 
-            if (searchMarks.isEmpty())
+            if (searchMarks.isEmpty()) // case used for when JSON is not properly formated
                 return;
 
             Intent intent = new Intent(MarkDetailActivity.this, MarkListActivity.class);

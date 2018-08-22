@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,7 @@ import com.algolia.search.saas.Client;
 import com.algolia.search.saas.CompletionHandler;
 import com.algolia.search.saas.Index;
 import com.algolia.search.saas.Query;
+import com.bumptech.glide.Glide;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -73,6 +75,11 @@ public class MainActivity extends AppCompatActivity
     private DrawerLayout drawer;
     private NavigationView navigationView;
     private ActionBarDrawerToggle toggle;
+    private TextView username;
+    private TextView email;
+    private ImageView avatar;
+    private View mHeaderView;
+
 
     // Firebase
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -111,6 +118,10 @@ public class MainActivity extends AppCompatActivity
         fab = findViewById(R.id.fab);
         drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
+        mHeaderView = navigationView.getHeaderView(0);
+        username = mHeaderView.findViewById(R.id.userName);
+        email = mHeaderView.findViewById(R.id.userEmail);
+        avatar = mHeaderView.findViewById(R.id.userAvatar);
     }
 
     @Override
@@ -125,6 +136,14 @@ public class MainActivity extends AppCompatActivity
         Intent i = getIntent();
         user = i.getExtras().getParcelable("user");
 
+        // set up user stuff
+        username.setText(user.getDisplayName());
+        email.setText(user.getEmail());
+
+        // avatar
+        // Glide.with(getApplicationContext()).load(user.getPhotoUrl()).into(avatar);
+
+
         // Set-up data structures to handle mark's info
         marks = new HashMap<>();
         nearbyMarks = new ArrayList<>();
@@ -137,7 +156,8 @@ public class MainActivity extends AppCompatActivity
         startLocationUpdates();
 
         // Algolia
-        index = client.getIndex("anotaciones");
+        searchHandler = new SearchHandler();
+        index = searchHandler.getIndex();
 
 
         // Set up listener that parses initially everything and then receive updates
@@ -364,15 +384,7 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.logout) {
             // Disconnect
-            AuthUI.getInstance()
-                    .signOut(this)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        public void onComplete(@NonNull Task<Void> task) {
-                            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                    });
+            handleLogout();
 
         }
 
@@ -409,10 +421,7 @@ public class MainActivity extends AppCompatActivity
             }
         };
 
-        Query q = new Query(user.getEmail());
-        q.setRestrictSearchableAttributes("user");
-
-        index.searchAsync(q, completionHandler);
+        index.searchAsync(searchHandler.getUserMarks(user.getEmail(), true), completionHandler);
     }
 
     private void handleMyMentions() {
@@ -443,10 +452,19 @@ public class MainActivity extends AppCompatActivity
             }
         };
 
-        Query q = new Query(user.getEmail());
-        q.setRestrictSearchableAttributes("description");
+        index.searchAsync(searchHandler.getUserMentions(user.getEmail()), completionHandler);
+    }
 
-        index.searchAsync(q, completionHandler);
+    private void handleLogout() {
+        AuthUI.getInstance()
+                .signOut(this)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                });
     }
 
     @Override

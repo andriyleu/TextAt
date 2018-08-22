@@ -62,8 +62,14 @@
         <View
             android:id="@+id/imagesSeparator"
             style="@style/Divider"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="0dp"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/markId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
 
         <TextView
             android:id="@+id/uri"
@@ -71,11 +77,6 @@
             android:layout_height="wrap_content"
             android:autoLink="web"
             android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/markId"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/timestamp"
@@ -90,9 +91,8 @@
         <TextView
             android:id="@+id/rating"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:gravity="right"
-            android:text="TextView" />
+            android:layout_height="wrap_content"
+            android:gravity="right" />
     </LinearLayout>
 
 </android.support.v4.widget.NestedScrollView>
