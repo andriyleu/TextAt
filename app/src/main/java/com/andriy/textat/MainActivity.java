@@ -188,12 +188,6 @@ public class MainActivity extends AppCompatActivity
                                     // Case: Nearby marks
                                     if (m.getPrivacy() == 2) {
                                         nearbyMarks.add(m);
-                                        if (currentLocation != null) {
-                                            if (isMarkVisible(m, currentLocation)) {
-                                                mapHandler.getmClusterManager().addItem(m);
-                                                continue;
-                                            }
-                                        }
                                     }
 
                                     mapHandler.getmClusterManager().addItem(m);
