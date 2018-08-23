@@ -23,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -37,16 +38,14 @@ import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemInfoWindowClickListener;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public class MapHandler extends Fragment implements OnMapReadyCallback {
+public class MapHandler extends Fragment implements OnMapReadyCallback, GoogleMap.OnMapLoadedCallback {
 
     // Map related objects
     private GoogleMap map;
     private ClusterManager<Mark> mClusterManager;
-
-    // Interaction with parent activity
-    private MainActivity parent;
 
     // Fragment interaction with parent, not used but needed
     private OnFragmentInteractionListener mListener;
@@ -65,7 +64,6 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        parent = ((MainActivity) getActivity());
     }
 
     @Override
@@ -104,6 +102,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
 
             map = googleMap;
             mClusterManager = new ClusterManager<>(getActivity(), googleMap);
+            map.setOnMapLoadedCallback(this);
 
             map.setMyLocationEnabled(true);
             map.setOnCameraIdleListener(mClusterManager);
@@ -116,7 +115,9 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
             map.setOnCameraMoveListener(renderer);
 
             mClusterManager.setRenderer(renderer);
-
+            if (getActivity() instanceof MarkListActivity) {
+                ((MarkListActivity) getActivity()).setMarks();
+            }
             mClusterManager
                     .setOnClusterClickListener(new ClusterManager.OnClusterClickListener<Mark>() {
                         @Override
@@ -143,6 +144,13 @@ public class MapHandler extends Fragment implements OnMapReadyCallback {
 
 
             });
+        }
+    }
+
+    @Override
+    public void onMapLoaded() {
+        if (getActivity() instanceof MarkListActivity) {
+            ((MarkListActivity) getActivity()).setMarks();
         }
     }
 
