@@ -141,7 +141,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                 searching = matchedText;
 
                 if (autoLinkMode == AutoLinkMode.MODE_MENTION) {
-                    searchHandler.getIndex().getObjectAsync(matchedText.substring(2, matchedText.length()), new CompletionHandler() {
+                    searchHandler.getIndex().getObjectAsync(matchedText.substring(1, matchedText.length()), new CompletionHandler() {
                                 @Override
                                 public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
                                     Intent intent = new Intent(MarkDetailActivity.this, MarkDetailActivity.class);

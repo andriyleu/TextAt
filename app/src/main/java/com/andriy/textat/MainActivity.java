@@ -187,7 +187,9 @@ public class MainActivity extends AppCompatActivity
 
                                     // Case: Nearby marks
                                     if (m.getPrivacy() == 2) {
+                                        marks.put(id, m);
                                         nearbyMarks.add(m);
+                                        continue;
                                     }
 
                                     mapHandler.getmClusterManager().addItem(m);
