@@ -206,7 +206,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         rating.setText("Puntuación: " + markRating);
 
         //timestamp to spanish
-        timestamp.setText("Fecha de publicación: " + m.getDate());
+        timestamp.setText("Publicado " + m.getDate());
 
         // uri
         if (!m.getUri().isEmpty()) {

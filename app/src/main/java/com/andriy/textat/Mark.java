@@ -12,9 +12,11 @@ import com.google.maps.android.clustering.ClusterItem;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class Mark implements Parcelable, ClusterItem {
     private GeoPoint location;
@@ -183,8 +185,10 @@ public class Mark implements Parcelable, ClusterItem {
 
     @Exclude
     public String getDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm - dd/MM/yyyy");
-        return sdf.format(timestamp.toDate());
+
+        PrettyTime time = new PrettyTime(new Locale("es"));
+
+        return time.format(timestamp.toDate());
     }
 
 
