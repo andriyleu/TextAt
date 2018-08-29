@@ -26,7 +26,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/listToolbar" />
+        app:layout_constraintTop_toBottomOf="@+id/listToolbar"
+        />
 
     <LinearLayout
         android:id="@+id/map_layout"
@@ -38,7 +39,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/listToolbar"
-        android:visibility="gone" >
+        android:visibility="gone">
 
         <fragment
             android:id="@+id/mapList"

@@ -3,43 +3,23 @@ package com.andriy.textat;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.ClusterManager.OnClusterItemInfoWindowClickListener;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class MapHandler extends Fragment implements OnMapReadyCallback, GoogleMap.OnMapLoadedCallback {
 
@@ -50,9 +30,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, GoogleMa
     // Fragment interaction with parent, not used but needed
     private OnFragmentInteractionListener mListener;
 
+    private Marker clickedMarker;
+
     // Debug
     public static final String TAG = "MapHandler";
-
 
 
     public MapHandler() {
@@ -104,6 +85,8 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, GoogleMa
             mClusterManager = new ClusterManager<>(getActivity(), googleMap);
             map.setOnMapLoadedCallback(this);
 
+            mClusterManager.onCameraIdle();
+
             map.setMyLocationEnabled(true);
             map.setOnCameraIdleListener(mClusterManager);
             map.setOnMarkerClickListener(mClusterManager);
@@ -118,6 +101,7 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, GoogleMa
             if (getActivity() instanceof MarkListActivity) {
                 ((MarkListActivity) getActivity()).setMarks();
             }
+
             mClusterManager
                     .setOnClusterClickListener(new ClusterManager.OnClusterClickListener<Mark>() {
                         @Override
@@ -160,6 +144,10 @@ public class MapHandler extends Fragment implements OnMapReadyCallback, GoogleMa
 
     public GoogleMap getMap() {
         return map;
+    }
+
+    public void setClickedMarker(Marker clickedMarker) {
+        this.clickedMarker = clickedMarker;
     }
 
     // Fragment interaction with Activity
