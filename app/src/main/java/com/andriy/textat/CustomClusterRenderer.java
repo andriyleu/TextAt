@@ -3,17 +3,12 @@ package com.andriy.textat;
 import android.content.Context;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.view.DefaultClusterRenderer;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.OverridingMethodsMustInvokeSuper;
 
 public class CustomClusterRenderer extends DefaultClusterRenderer<Mark> implements GoogleMap.OnCameraMoveListener {
 
@@ -50,4 +45,26 @@ public class CustomClusterRenderer extends DefaultClusterRenderer<Mark> implemen
     protected void onClusterItemRendered(Mark mark, Marker marker) {
         super.onClusterItemRendered(mark, marker);
     }
+
+    @Override
+    protected void onBeforeClusterItemRendered(Mark mark, MarkerOptions markerOptions) {
+
+        long rating = mark.getRating();
+        switch ((int) rating) {
+
+            case -1:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_mark));
+                break;
+            case 0:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.blue_mark));
+                break;
+            case 1:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.green_mark));
+                break;
+        }
+
+
+    }
+
+
 }
