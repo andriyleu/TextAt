@@ -45,7 +45,7 @@
         android:inputType="textMultiLine|textPersonName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/publishButton" />
+        app:layout_constraintTop_toBottomOf="@+id/titulo" />
 
     <Spinner
         android:id="@+id/privacySettings"
@@ -149,7 +149,7 @@
     </LinearLayout>
 
     <EditText
-        android:id="@+id/uri"
+        android:id="@+id/userAvatar"
         android:layout_width="0dp"
         android:layout_height="45dp"
         android:layout_marginEnd="8dp"
@@ -171,7 +171,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/uri">
+        app:layout_constraintTop_toBottomOf="@+id/userAvatar">
 
         <ImageView
             android:id="@+id/uploadImage1"
@@ -201,6 +201,20 @@
             tools:layout_editor_absoluteY="417dp" />
 
     </LinearLayout>
+
+    <EditText
+        android:id="@+id/titulo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:hint="Título"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/coordinates" />
 
 
 </android.support.constraint.ConstraintLayout>

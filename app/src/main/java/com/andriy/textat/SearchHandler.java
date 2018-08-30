@@ -33,6 +33,7 @@ public class SearchHandler {
                         .put("date", m.getTimestamp().getSeconds())
                         .put("visibility", m.getVisibility())
                         .put("hasImages", m.isHasImages())
+                        .put("markTitle", m.getMarkTitle())
                 , null);
     }
 
@@ -43,7 +44,7 @@ public class SearchHandler {
     // Returns everything with user at user field in Algolia
     public Query getUserMarks(String user, boolean accountOwner) {
         Query q = new Query(user);
-        q.setRestrictSearchableAttributes("user");
+        q.setFacets("user");
 
         if (!accountOwner) {
             q.setFilters("privacy: 0");

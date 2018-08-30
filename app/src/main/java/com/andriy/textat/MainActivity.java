@@ -32,6 +32,7 @@ import com.algolia.search.saas.CompletionHandler;
 import com.algolia.search.saas.Index;
 import com.algolia.search.saas.Query;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -43,6 +44,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentChange;
@@ -53,6 +55,8 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -103,6 +107,9 @@ public class MainActivity extends AppCompatActivity
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
     private boolean boot = false;
 
+    // username
+    private String usernick;
+
     // Debug related
     public static final String TAG = "MainActivity";
 
@@ -136,8 +143,34 @@ public class MainActivity extends AppCompatActivity
         Intent i = getIntent();
         user = i.getExtras().getParcelable("user");
 
+
+        // get username
+        db.collection("uids").document(user.getUid()).addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(DocumentSnapshot documentSnapshot, FirebaseFirestoreException e) {
+                if (e != null) {
+                    Log.w("TAG", "listen:error", e);
+                    return;
+                }
+
+                usernick = (String) documentSnapshot.get("nick");
+                username.setText("@".concat(usernick));
+                ((TextAt) getApplication()).setUsernick(usernick);
+
+                // image
+                final StorageReference ref = FirebaseStorage.getInstance().getReference().child("users/".concat(usernick).concat(".jpg"));
+                ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        Glide.with(getApplicationContext()).load(uri.toString()).apply(RequestOptions.circleCropTransform()).into(avatar);
+                    }
+                });
+
+
+            }
+        });
+
         // set up user stuff
-        username.setText(user.getDisplayName());
         email.setText(user.getEmail());
 
         // avatar
@@ -181,7 +214,7 @@ public class MainActivity extends AppCompatActivity
                                 case ADDED:
 
                                     // Case: Private marks
-                                    if (m.getPrivacy() == 1 && !m.getUser().equals(user.getEmail())) {
+                                    if (m.getPrivacy() == 1 && !m.getUser().equals(usernick)) {
                                         continue;
                                     }
 
@@ -232,6 +265,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, AddMarkActivity.class);
                 intent.putExtra("location", currentLocation);
+                intent.putExtra("user", usernick);
                 startActivity(intent);
             }
         });
@@ -375,7 +409,9 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.settings) {
 
-            Intent intent = new Intent(this, MarkDetailActivity.class);
+            Intent intent = new Intent(this, SettingsActivity.class);
+            intent.putExtra("user", user);
+            intent.putExtra("usernick", usernick);
             startActivity(intent);
 
         } else if (id == R.id.logout) {
@@ -400,13 +436,13 @@ public class MainActivity extends AppCompatActivity
                     JSONArray hits = content.getJSONArray("hits");
                     for (int i = 0; i < hits.length(); i++) {
                         JSONObject jsonObject = hits.getJSONObject(i);
-                        String id = jsonObject.getString("objectID");
-                        marksList.add(marks.get(id));
+                        marksList.add(new Mark(jsonObject));
                     }
 
                     Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
                     intent.putParcelableArrayListExtra("marks", marksList);
                     intent.putExtra("title", "Mis anotaciones");
+                    intent.putExtra("user", usernick);
                     startActivity(intent);
 
                 } catch (JSONException e) {
@@ -417,7 +453,7 @@ public class MainActivity extends AppCompatActivity
             }
         };
 
-        index.searchAsync(searchHandler.getUserMarks(user.getEmail(), true), completionHandler);
+        index.searchAsync(searchHandler.getUserMarks(usernick, true), completionHandler);
     }
 
     private void handleMyMentions() {
@@ -438,6 +474,7 @@ public class MainActivity extends AppCompatActivity
                     Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
                     intent.putParcelableArrayListExtra("marks", marksList);
                     intent.putExtra("title", "Mis menciones");
+                    intent.putExtra("user", usernick);
                     startActivity(intent);
 
                 } catch (JSONException e) {
@@ -448,7 +485,7 @@ public class MainActivity extends AppCompatActivity
             }
         };
 
-        index.searchAsync(searchHandler.getUserMentions(user.getEmail()), completionHandler);
+        index.searchAsync(searchHandler.getUserMentions(usernick), completionHandler);
     }
 
     private void handleLogout() {

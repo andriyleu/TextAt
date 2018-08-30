@@ -20,7 +20,7 @@ import java.util.Locale;
 
 public class Mark implements Parcelable, ClusterItem {
     private GeoPoint location;
-    private String title;
+    private String markTitle;
     private String description;
     private String uri;
     private String user;
@@ -31,22 +31,23 @@ public class Mark implements Parcelable, ClusterItem {
     private boolean hasImages;
     private String id;
 
+
     // empty constructor needed to retrieve from Firebase (POJO)
     public Mark() {
 
     }
 
-    public Mark(GeoPoint l, String d, String u, String c, Timestamp t, long r, long p, long v, boolean i) {
+    public Mark(GeoPoint l, String d, String u, String c, Timestamp t, long r, long p, long v, boolean i, String mT) {
         location = l;
         description = d;
         uri = u;
         user = c;
         rating = r;
         timestamp = t;
-        title = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
         privacy = p;
         setVisibility(v);
         hasImages = i;
+        markTitle = mT;
     }
 
     public Mark(JSONObject json) {
@@ -58,9 +59,9 @@ public class Mark implements Parcelable, ClusterItem {
             rating = json.getLong("rating");
             visibility = json.getLong("visibility");
             timestamp = new Timestamp(new Date(json.getLong("date") *1000L));
-            title = getTitle();
             user = json.getString("user");
             hasImages = json.getBoolean("hasImages");
+            markTitle = json.getString("markTitle");
 
 
         } catch (JSONException e) {
@@ -80,7 +81,7 @@ public class Mark implements Parcelable, ClusterItem {
         timestamp = in.readParcelable(Timestamp.class.getClassLoader());
         hasImages = (in.readInt() == 0) ? false : true;
         id = in.readString();
-        title = in.readString();
+        markTitle = in.readString();
     }
 
     public static final Creator<Mark> CREATOR = new Creator<Mark>() {
@@ -117,7 +118,7 @@ public class Mark implements Parcelable, ClusterItem {
         parcel.writeParcelable(timestamp, i);
         parcel.writeInt(hasImages ? 1 : 0);
         parcel.writeString(id);
-        parcel.writeString(getTitle());
+        parcel.writeString(markTitle);
     }
 
 
@@ -157,6 +158,8 @@ public class Mark implements Parcelable, ClusterItem {
         return hasImages;
     }
 
+    public String getMarkTitle() { return markTitle; }
+
     @Exclude
     @Override
     public LatLng getPosition() {
@@ -166,8 +169,10 @@ public class Mark implements Parcelable, ClusterItem {
     @Exclude
     @Override
     public String getTitle() {
-        return "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
+        return markTitle;
     }
+
+
 
     @Exclude
     @Override

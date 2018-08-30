@@ -132,8 +132,10 @@ public class MarkListActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.toggleListMap:
                 if (isList) {
-                    setCameraOnToggle();
-                    showMapList();
+                    if (!marks.isEmpty()) {
+                        setCameraOnToggle();
+                        showMapList();
+                    }
                 } else {
                     showMarkList();
                 }

@@ -11,8 +11,6 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
-import android.text.method.LinkMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,8 +21,8 @@ import android.widget.Toast;
 
 import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.CompletionHandler;
-import com.algolia.search.saas.Query;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,9 +48,10 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
     private AutoLinkTextView description;
     private TextView rating;
     private TextView timestamp;
-    private ImageView uri;
+    private ImageView avatar;
     private TextView markId;
     private TextView visibility;
+    private TextView coordinates;
     private List<ImageView> images;
     private LinearLayout imageLayout;
     private View separator;
@@ -61,6 +60,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
     private Uri imageLink;
 
     private FirebaseAuth mAuth;
+    private String user;
 
     private String idDocument;
     FirebaseStorage storage;
@@ -83,7 +83,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         description = findViewById(R.id.description);
         rating = findViewById(R.id.rating);
         timestamp = findViewById(R.id.timestamp);
-        uri = findViewById(R.id.uri);
+        avatar = findViewById(R.id.userAvatar);
         markId = findViewById(R.id.markId);
         visibility = findViewById(R.id.visibility);
         images.add((ImageView) findViewById(R.id.markImage1));
@@ -91,6 +91,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         images.add((ImageView) findViewById(R.id.markImage3));
         imageLayout = findViewById(R.id.imageViewer);
         separator = findViewById(R.id.imagesSeparator);
+        coordinates = findViewById(R.id.coordinates);
     }
 
     @Override
@@ -100,11 +101,16 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
 
         bindElements();
 
+        mAuth = FirebaseAuth.getInstance();
+
+
         // Get info from extras
         Intent i = getIntent();
         Mark mark = (Mark) i.getExtras().getParcelable("mark");
         idDocument = i.getExtras().getString("id");
         m = mark;
+        user =  ((TextAt) getApplication()).getUsernick();
+
 
         // Firebase
         storage = FirebaseStorage.getInstance();
@@ -208,8 +214,10 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         //timestamp to spanish
         timestamp.setText("Publicado " + m.getDate());
 
+        coordinates.setText("Lat: ".concat(Double.toString(m.getLocation().getLatitude()) + " Lon: ".concat(Double.toString(m.getLocation().getLongitude()))));
+
         // uri
-        if (!m.getUri().isEmpty()) {
+        /*if (!m.getUri().isEmpty()) {
             uri.setVisibility(View.VISIBLE);
 
             uri.setOnClickListener(new View.OnClickListener() {
@@ -220,7 +228,16 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                                        }
                                    }
             );
-        }
+        }*/
+
+        final StorageReference ref = FirebaseStorage.getInstance().getReference().child("users/".concat(m.getUser()).concat(".jpg"));
+        ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                Glide.with(getApplicationContext()).load(uri.toString()).apply(RequestOptions.circleCropTransform()).into(avatar);
+            }
+        });
+
 
         // images setUp
         if (m.isHasImages()) {
@@ -236,9 +253,8 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        mAuth = FirebaseAuth.getInstance();
-        String email = mAuth.getCurrentUser().getEmail();
-        if (email.equals(m.getUser())) {
+
+        if (user.equals(m.getUser())) {
             getMenuInflater().inflate(R.menu.menu_mark_detail, menu);
             return true;
         }

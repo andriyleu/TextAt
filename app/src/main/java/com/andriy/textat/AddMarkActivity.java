@@ -48,11 +48,12 @@ public class AddMarkActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private SearchHandler searchHandler;
 
-    public static final String TAG = "debug";
+    public static final String TAG = "AddMarkActivity";
 
     // UI Elements
     private Toolbar toolbar;
     private Button publish;
+    private EditText title;
     private TextView coordinates;
     private EditText description;
     private EditText uri;
@@ -64,9 +65,10 @@ public class AddMarkActivity extends AppCompatActivity {
 
 
     // Logic elements
-    int rating = 0;
-    int selectedPrivacy = 0;
-    int selectedVisibility = 0;
+    private int rating = 0;
+    private int selectedPrivacy = 0;
+    private int selectedVisibility = 0;
+    private String user;
 
     // Image pickers
     public static final int PICK_IMAGE1 = 1; // image picker activity result
@@ -83,11 +85,12 @@ public class AddMarkActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         privacySettings = findViewById(R.id.privacySettings);
         description = findViewById(R.id.description);
+        coordinates = findViewById(R.id.coordinates);
         publish = findViewById(R.id.publishButton);
-        uri = findViewById(R.id.uri);
+        uri = findViewById(R.id.userAvatar);
         privacySettings = findViewById(R.id.privacySettings);
         privacyOptions = findViewById(R.id.privacyOptions);
-        coordinates = findViewById(R.id.coordinates);
+        title = findViewById(R.id.titulo);
         imageUpload1 = findViewById(R.id.uploadImage1);
         imageUpload2 = findViewById(R.id.uploadImage2);
         imageUpload3 = findViewById(R.id.uploadImage3);
@@ -125,6 +128,7 @@ public class AddMarkActivity extends AppCompatActivity {
         // Get user location
         Intent i = getIntent();
         final Location location = i.getParcelableExtra("location");
+        user = i.getStringExtra("user");
 
         // Set coordinates title
         coordinates.setText("(" + location.getLatitude() + ", " + location.getLongitude() + ")");
@@ -194,6 +198,12 @@ public class AddMarkActivity extends AppCompatActivity {
 
                 String url = uri.getText().toString();
 
+                // Title is an obligatory field
+                if (TextUtils.isEmpty(title.getText().toString()) || title.getText().toString().length() > 70) {
+                    description.setError("¡Tienes que escribir una título de 70 caracteres o menos!");
+                    return;
+                }
+
                 // Description is an obligatory field
                 if (TextUtils.isEmpty(description.getText().toString())) {
                     description.setError("¡Tienes que escribir una descripción!");
@@ -212,7 +222,7 @@ public class AddMarkActivity extends AppCompatActivity {
                     }
                 }
 
-                final Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), url, FirebaseAuth.getInstance().getCurrentUser().getEmail(), Timestamp.now(), rating, selectedPrivacy, selectedVisibility, hasImages);
+                final Mark m = new Mark(new GeoPoint(location.getLatitude(), location.getLongitude()), description.getText().toString(), url, user, Timestamp.now(), rating, selectedPrivacy, selectedVisibility, hasImages, title.getText().toString());
                 db.collection("anotaciones")
                         .add(m)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
