@@ -154,16 +154,18 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                     searchHandler.getIndex().getObjectAsync(matchedText.substring(1, matchedText.length()), new CompletionHandler() {
                                 @Override
                                 public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
+
+                                    if (e != null) {
+                                            searchHandler.getIndex().searchAsync(searchHandler.getUserMarks(searching, false), MarkDetailActivity.this);
+                                            return;
+                                    }
+
                                     Intent intent = new Intent(MarkDetailActivity.this, MarkDetailActivity.class);
                                     intent.putExtra("mark", new Mark(jsonObject));
                                     startActivity(intent);
                                 }
                             }
                     );
-                }
-
-                if (autoLinkMode == AutoLinkMode.MODE_EMAIL) {
-                    searchHandler.getIndex().searchAsync(searchHandler.getUserMarks(matchedText, false), MarkDetailActivity.this);
                 }
 
                 if (autoLinkMode == AutoLinkMode.MODE_HASHTAG) {
@@ -199,6 +201,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                 break;
             case 2:
                 visibility.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.near_mark));
+                visib.setVisibility(View.VISIBLE);
                 visib.setText("Anotación visible a ".concat(Long.toString(m.getVisibility())).concat("m"));
                 break;
         }
@@ -342,7 +345,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
 
             Intent intent = new Intent(MarkDetailActivity.this, MarkListActivity.class);
             intent.putParcelableArrayListExtra("marks", searchMarks);
-            intent.putExtra("title", searching);
+            intent.putExtra("title", "Publicaciones de: ".concat(searching));
             startActivity(intent);
 
         } catch (JSONException e1) {
