@@ -1,9 +1,14 @@
 package com.andriy.textat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -21,6 +26,9 @@ public class LoginActivity extends AppCompatActivity {
 
     final int RC_SIGN_IN = 123;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final int REQUEST_FINE_LOCATION = 1;
+    private boolean user_exists = false;
+    private FirebaseUser user;
 
 
     @Override
@@ -28,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
+
 
         if (auth.getCurrentUser() != null) { // Si el usuario está logueado ya
             switchToHome(auth.getCurrentUser());
@@ -61,20 +70,24 @@ public class LoginActivity extends AppCompatActivity {
 
             if (resultCode == RESULT_OK) {
 
-                final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                user = FirebaseAuth.getInstance().getCurrentUser();
 
                 db.collection("uids").document(user.getUid()).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                         if (task.isSuccessful()) {
                             DocumentSnapshot d = task.getResult();
-                            if (d.exists()) {
-                                // Usuario logueado y con nickname, cambiar a "Home"
-                                switchToHome(user);
+
+                            user_exists = d.exists();
+
+                            // Check if user has given app location permissions
+                            if (ActivityCompat.checkSelfPermission(LoginActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(LoginActivity.this
+                                    , android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                getLocationPermissions();
+                                return;
                             }
-                            else {
-                                switchUserSettings(user);
-                            }
+
+                            moveTo(d.exists());
                         }
                     }
                 });
@@ -98,6 +111,38 @@ public class LoginActivity extends AppCompatActivity {
         intent.putExtra("user", user);
         startActivity(intent);
         finish();
+    }
+
+    private void moveTo(boolean hasAccount) {
+
+        if (hasAccount) {
+            switchToHome(user);
+        } else {
+            switchUserSettings(user);
+        }
+
+    }
+
+    private void getLocationPermissions() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_FINE_LOCATION:
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(LoginActivity.this, "Permisos aceptados!", Toast.LENGTH_SHORT).show();
+                    moveTo(user_exists);
+                } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        finishAffinity();
+                    } else {
+                        finish();
+                    }
+                }
+        }
     }
 
 }

@@ -136,6 +136,12 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Check if user has given app location permissions
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            getLocationPermissions();
+            return;
+        }
+
         // Bind XML to Objects
         bindElements();
 
@@ -180,11 +186,6 @@ public class MainActivity extends AppCompatActivity
         // Set-up data structures to handle mark's info
         marks = new HashMap<>();
         nearbyMarks = new ArrayList<>();
-
-        // Check if user has given app location permissions
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            getLocationPermissions();
-        }
 
         startLocationUpdates();
 
