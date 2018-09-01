@@ -61,6 +61,7 @@ public class SearchHandler {
         return q;
     }
 
+    // Get hashtags
     public Query getHashtag(String hashtag) {
         Query q = new Query(hashtag);
         q.setRestrictSearchableAttributes("description");

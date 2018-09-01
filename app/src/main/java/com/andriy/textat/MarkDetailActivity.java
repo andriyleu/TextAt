@@ -46,16 +46,18 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
     private CollapsingToolbarLayout collapsingToolbar;
     private TextView createdBy;
     private AutoLinkTextView description;
-    private TextView rating;
+    private ImageView rating;
     private TextView timestamp;
     private ImageView avatar;
     private TextView markId;
-    private TextView visibility;
+    private ImageView visibility;
     private TextView coordinates;
     private List<ImageView> images;
     private LinearLayout imageLayout;
     private View separator;
     private Mark m;
+    private ImageView uri;
+    private TextView visib;
 
     private Uri imageLink;
 
@@ -92,6 +94,8 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         imageLayout = findViewById(R.id.imageViewer);
         separator = findViewById(R.id.imagesSeparator);
         coordinates = findViewById(R.id.coordinates);
+        uri = findViewById(R.id.uri);
+        visib = findViewById(R.id.visib);
     }
 
     @Override
@@ -109,7 +113,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         Mark mark = (Mark) i.getExtras().getParcelable("mark");
         idDocument = i.getExtras().getString("id");
         m = mark;
-        user =  ((TextAt) getApplication()).getUsernick();
+        user = ((TextAt) getApplication()).getUsernick();
 
 
         // Firebase
@@ -185,16 +189,17 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         });
 
         // Set visibility if needed
-        long privacy = m.getPrivacy();
-        switch ((int) privacy) {
+        int privacy = (int) m.getPrivacy();
+        switch (privacy) {
             case 0:
-                visibility.setText("Privacidad: pública.");
+                visibility.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.public_mark));
                 break;
             case 1:
-                visibility.setText("Privacidad: privada.");
+                visibility.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.private_mark));
                 break;
             case 2:
-                visibility.setText("Privacidad: visible a " + m.getVisibility() + "m.");
+                visibility.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.near_mark));
+                visib.setText("Anotación visible a ".concat(Long.toString(m.getVisibility())).concat("m"));
                 break;
         }
 
@@ -203,13 +208,20 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         createdBy.setText("Anotación creada por " + mark.getUser());
         getSupportActionBar().setTitle(mark.getTitle());
 
-        // rating setUp
-        String markRating = Long.toString(mark.getRating());
-        if (mark.getRating() == 1) {
-            markRating = "+" + markRating;
-        }
+        // Set up rating
+        int r = (int) m.getRating();
 
-        rating.setText("Puntuación: " + markRating);
+        switch (r) {
+            case -1:
+                rating.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.dislike_mark));
+                break;
+            case 0:
+                rating.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.neutral_mark));
+                break;
+            case 1:
+                rating.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.like_mark));
+                break;
+        }
 
         //timestamp to spanish
         timestamp.setText("Publicado " + m.getDate());
@@ -217,7 +229,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         coordinates.setText("Lat: ".concat(Double.toString(m.getLocation().getLatitude()) + " Lon: ".concat(Double.toString(m.getLocation().getLongitude()))));
 
         // uri
-        /*if (!m.getUri().isEmpty()) {
+        if (!m.getUri().isEmpty()) {
             uri.setVisibility(View.VISIBLE);
 
             uri.setOnClickListener(new View.OnClickListener() {
@@ -228,7 +240,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                                        }
                                    }
             );
-        }*/
+        }
 
         final StorageReference ref = FirebaseStorage.getInstance().getReference().child("users/".concat(m.getUser()).concat(".jpg"));
         ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
