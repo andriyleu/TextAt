@@ -1,5 +1,6 @@
 package com.andriy.textat;
 
+import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.Index;
 import com.algolia.search.saas.Query;
@@ -11,10 +12,15 @@ public class SearchHandler {
 
     private Client client;
     private Index index;
+    private Searcher searcher;
+
 
     public SearchHandler() {
         client = new Client("KAJVMYN673", "5d42104707798a805f13ff8658a595dc");
         index = client.getIndex("anotaciones");
+        searcher = Searcher.create("KAJVMYN673", "5d42104707798a805f13ff8658a595dc", "anotaciones");
+        getSearcher().setQuery(new Query().setRestrictSearchableAttributes("description", "title"));
+
     }
 
     public Index getIndex() {
@@ -44,7 +50,7 @@ public class SearchHandler {
     // Returns everything with user at user field in Algolia
     public Query getUserMarks(String user, boolean accountOwner) {
         Query q = new Query(user);
-        q.setFacets("user");
+        q.setRestrictSearchableAttributes("user");
 
         if (!accountOwner) {
             q.setFilters("privacy: 0");
@@ -68,5 +74,17 @@ public class SearchHandler {
         q.setFilters("privacy: 0");
 
         return q;
+    }
+
+    public Query searchInText(String text) {
+        Query q = new Query(text);
+        q.setFilters("privacy: 0");
+
+        return q;
+
+    }
+
+    public Searcher getSearcher() {
+        return searcher;
     }
 }

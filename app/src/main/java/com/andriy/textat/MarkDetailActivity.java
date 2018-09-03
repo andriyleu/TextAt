@@ -19,6 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.instantsearch.model.AlgoliaResultsListener;
+import com.algolia.instantsearch.model.SearchResults;
 import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.CompletionHandler;
 import com.bumptech.glide.Glide;
@@ -40,7 +42,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MarkDetailActivity extends AppCompatActivity implements CompletionHandler {
+public class MarkDetailActivity extends AppCompatActivity implements CompletionHandler, AlgoliaResultsListener {
 
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
@@ -148,10 +150,10 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
             @Override
             public void onAutoLinkTextClick(AutoLinkMode autoLinkMode, String matchedText) {
 
-                searching = matchedText;
-
                 if (autoLinkMode == AutoLinkMode.MODE_MENTION) {
-                    searchHandler.getIndex().getObjectAsync(matchedText.substring(1, matchedText.length()), new CompletionHandler() {
+                    searching = matchedText.substring(2, matchedText.length());
+
+                    searchHandler.getIndex().getObjectAsync(searching, new CompletionHandler() {
                                 @Override
                                 public void requestCompleted(JSONObject jsonObject, AlgoliaException e) {
 
@@ -351,5 +353,10 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
         } catch (JSONException e1) {
             e1.printStackTrace();
         }
+    }
+
+    @Override
+    public void onResults(@NonNull SearchResults results, boolean isLoadingMore) {
+
     }
 }

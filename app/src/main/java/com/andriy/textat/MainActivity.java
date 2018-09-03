@@ -2,8 +2,11 @@ package com.andriy.textat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.SearchManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -23,9 +27,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.support.v7.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.algolia.instantsearch.helpers.InstantSearch;
+import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.CompletionHandler;
@@ -91,9 +98,12 @@ public class MainActivity extends AppCompatActivity
     private ListenerRegistration updateListener;
 
     // Algolia
-    Client client = new Client("KAJVMYN673", "5d42104707798a805f13ff8658a595dc");
-    Index index;
-    SearchHandler searchHandler;
+    private Client client = new Client("KAJVMYN673", "5d42104707798a805f13ff8658a595dc");
+    private Index index;
+    private SearchHandler searchHandler;
+    private Searcher searcher;
+    private MarkListActivity listActivity;
+    private String searchQuery;
 
     // Internal data handling
     private Map<String, Mark> marks;
@@ -149,6 +159,12 @@ public class MainActivity extends AppCompatActivity
         Intent i = getIntent();
         user = i.getExtras().getParcelable("user");
 
+        // searchable
+        Intent intent = getIntent();
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+
+        }
 
         // get username
         db.collection("uids").document(user.getUid()).addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -192,7 +208,7 @@ public class MainActivity extends AppCompatActivity
         // Algolia
         searchHandler = new SearchHandler();
         index = searchHandler.getIndex();
-
+        searcher = searchHandler.getSearcher();
 
         // Set up listener that parses initially everything and then receive updates
         updateListener = db.collection("anotaciones")
@@ -373,11 +389,27 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        /*MenuItem searchItem = menu.findItem(R.id.action_search);
-        SearchView searchView =
-                (SearchView)menu.findItem(R.id.action_search).getActionView();
-        searchView.setMaxWidth(Integer.MAX_VALUE);*/
 
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_action_search);
+        icon.setTint(getResources().getColor(R.color.white));
+        searchItem.setIcon(icon);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                searchQuery = s;
+                handleSearch();
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
+        });
+        //
         return true;
     }
 
@@ -390,7 +422,6 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_search) {
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -487,6 +518,38 @@ public class MainActivity extends AppCompatActivity
         };
 
         index.searchAsync(searchHandler.getUserMentions(usernick), completionHandler);
+    }
+
+    private void handleSearch() {
+        CompletionHandler completionHandler = new CompletionHandler() {
+            @Override
+            public void requestCompleted(JSONObject content, AlgoliaException error) {
+
+                ArrayList<Mark> marksList = new ArrayList<>();
+
+                try {
+                    JSONArray hits = content.getJSONArray("hits");
+                    for (int i = 0; i < hits.length(); i++) {
+                        JSONObject jsonObject = hits.getJSONObject(i);
+                        String id = jsonObject.getString("objectID");
+                        marksList.add(new Mark(hits.getJSONObject(i)));
+                    }
+
+                    Intent intent = new Intent(MainActivity.this, MarkListActivity.class);
+                    intent.putParcelableArrayListExtra("marks", marksList);
+                    intent.putExtra("title", "Buscando: ".concat(searchQuery));
+                    startActivity(intent);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        };
+
+        index.searchAsync(searchHandler.searchInText(searchQuery), completionHandler);
+
     }
 
     private void handleLogout() {

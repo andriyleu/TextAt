@@ -144,5 +144,6 @@
 
     // Ajustes
     <string name="title_activity_settings">Ajustes</string>
+    <string name="title_activity_search">SearchActivity</string>
 
 </resources>

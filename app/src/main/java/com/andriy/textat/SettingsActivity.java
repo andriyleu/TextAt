@@ -97,7 +97,9 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        setImage();
+        if (!isRegister) {
+            setImage();
+        }
 
         // toolbar
 
