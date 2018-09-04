@@ -230,15 +230,15 @@ public class MainActivity extends AppCompatActivity
                             switch (document.getType()) {
                                 case ADDED:
 
-                                    // Case: Private marks
-                                    if (m.getPrivacy() == 1 && !m.getUser().equals(usernick)) {
-                                        continue;
-                                    }
-
                                     // Case: Nearby marks
                                     if (m.getPrivacy() == 2) {
                                         marks.put(id, m);
                                         nearbyMarks.add(m);
+                                        continue;
+                                    }
+
+                                    // Case: Private marks
+                                    if (m.getPrivacy() == 1 && !m.getUser().equals(usernick)) {
                                         continue;
                                     }
 

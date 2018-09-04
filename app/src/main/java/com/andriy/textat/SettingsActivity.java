@@ -216,10 +216,20 @@ public class SettingsActivity extends AppCompatActivity {
 
         String editNick = usernick.getText().toString();
 
-        if (editNick.length() > 0) {
-            checkUsernameExists(usernick.getText().toString());
+        if (isRegister) {
+            if (editNick.length() > 0) {
+                checkUsernameExists(usernick.getText().toString());
+            } else {
+                usernick.setError("Debes elegir un nick!");
+            }
         } else {
-            usernick.setError("Debes elegir un nick!");
+            if (!usernickname.equals(editNick)) {
+                checkUsernameExists(editNick);
+            } else {
+                if (newAvatar) {
+                    uploadImage(imageLink);
+                }
+            }
         }
     }
 

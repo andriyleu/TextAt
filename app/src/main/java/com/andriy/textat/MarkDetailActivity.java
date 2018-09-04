@@ -171,6 +171,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
                 }
 
                 if (autoLinkMode == AutoLinkMode.MODE_HASHTAG) {
+                    searching = matchedText.substring(1, matchedText.length());
                     searchHandler.getIndex().searchAsync(searchHandler.getHashtag(matchedText), MarkDetailActivity.this);
                 }
             }
@@ -210,7 +211,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
 
 
         // Title and subtitle (Mark coordinates and user)
-        createdBy.setText("Anotación creada por " + mark.getUser());
+        createdBy.setText("Creado por @" + mark.getUser());
         getSupportActionBar().setTitle(mark.getTitle());
 
         // Set up rating
@@ -275,6 +276,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
             getMenuInflater().inflate(R.menu.menu_mark_detail, menu);
             return true;
         }
+
         return false;
     }
 
@@ -347,7 +349,7 @@ public class MarkDetailActivity extends AppCompatActivity implements CompletionH
 
             Intent intent = new Intent(MarkDetailActivity.this, MarkListActivity.class);
             intent.putParcelableArrayListExtra("marks", searchMarks);
-            intent.putExtra("title", "Publicaciones de: ".concat(searching));
+            intent.putExtra("title", "Anotaciones de: ".concat(searching));
             startActivity(intent);
 
         } catch (JSONException e1) {
